@@ -88,10 +88,6 @@ function runNumberAnimations(root) {
 }
 
 function boot() {
-  if (Store.isFirebase) {
-    // โหมด Firebase: การรันเว็บจะทำงานผ่าน onAuthStateChanged ด้านล่างโดยอัตโนมัติ
-    return;
-  }
   const user = Store.getActiveUser();
   const onboarding = document.getElementById('onboarding');
   const app = document.getElementById('app');
@@ -311,9 +307,20 @@ if (Store.isFirebase) {
       }
     } else {
       loader.classList.add('hidden');
-      document.getElementById('onboarding').classList.remove('hidden');
-      document.getElementById('app').classList.add('hidden');
-      renderOnboardingSwitch();
+      const activeUser = Store.getActiveUser();
+      if (activeUser) {
+        document.getElementById('onboarding').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        lastRenderedView = null;
+        renderNav(activeUser);
+        renderProfileChip(activeUser);
+        renderDrawerProfile(activeUser);
+        render();
+      } else {
+        document.getElementById('onboarding').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+        renderOnboardingSwitch();
+      }
     }
   });
 }
