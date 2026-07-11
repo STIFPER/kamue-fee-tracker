@@ -126,6 +126,22 @@ const Store = {
     }
   },
 
+  // ดึงข้อมูลสมาชิกทีมทั้งหมดจาก Firestore (สำหรับหน้า Team ของ Admin/Super Admin)
+  // อ่านได้เพราะ firestore.rules อนุญาตให้ isStaff() อ่าน users/{userId} และ logs ของทุกคน
+  async fetchTeamFromCloud() {
+    if (!this.isFirebase) return Object.values(this._db.users);
+
+    const snap = await db.collection('users').get();
+    const team = await Promise.all(snap.docs.map(async (doc) => {
+      const data = doc.data();
+      const logsSnap = await doc.ref.collection('logs').get();
+      const logs = {};
+      logsSnap.forEach(logDoc => { logs[logDoc.id] = logDoc.data(); });
+      return { ...data, id: doc.id, logs };
+    }));
+    return team;
+  },
+
   // ใช้สร้างบัญชีผู้ใช้ในโหมด local demo (Mock)
   createUser(displayName, role) {
     const id = uid();

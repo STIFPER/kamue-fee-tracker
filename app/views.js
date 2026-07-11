@@ -546,33 +546,68 @@ function exportMonthCsv(year, month, logs, procIndex) {
   URL.revokeObjectURL(a.href);
 }
 
-// ---------- Team (Admin/Super Admin only, local-demo aggregate) ----------
+// ---------- Team (Admin/Super Admin) ----------
+// โหมด Firebase: ดึงข้อมูลทุกคนในทีมจาก Firestore จริง (ดูได้จากล็อกอินของแอดมินคนเดียว ไม่ต้องใช้เครื่องเดียวกัน)
+// โหมดเดโม (ไม่เชื่อม Firebase): รวมเฉพาะผู้ใช้ที่เคยล็อกอินบนเครื่องนี้
+const TeamState = { loading: false, rows: null, error: null };
+
+function fetchTeamData() {
+  TeamState.loading = true;
+  TeamState.error = null;
+  Store.fetchTeamFromCloud()
+    .then(rows => { TeamState.rows = rows; TeamState.loading = false; rerender(); })
+    .catch(err => { TeamState.error = err.message || 'โหลดข้อมูลทีมไม่สำเร็จ'; TeamState.loading = false; rerender(); });
+}
+
 function renderTeam(root, user) {
   if (user.role !== 'admin' && user.role !== 'super_admin') { navigate('dashboard'); return; }
+
+  if (Store.isFirebase && TeamState.rows === null && !TeamState.loading) fetchTeamData();
+
   const today = new Date();
+  const todayStr = toDateStr(today);
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
   const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
 
-  const rows = Object.values(Store._db.users).map(u => {
-    const total = sumRange(u.logs, monthStart, monthEnd);
-    const count = Object.values(u.logs).reduce((s, l) => s + l.entries.length, 0);
-    return { ...u, monthTotal: total, entryCount: count };
-  }).sort((a, b) => b.monthTotal - a.monthTotal);
+  const source = Store.isFirebase ? (TeamState.rows || []) : Object.values(Store._db.users);
+  const rows = source.map(u => {
+    const monthTotal = sumRange(u.logs || {}, monthStart, monthEnd);
+    const todayLog = (u.logs || {})[todayStr];
+    const todayTotal = todayLog ? todayLog.entries.reduce((s, e) => s + e.subtotal, 0) : 0;
+    const count = Object.values(u.logs || {}).reduce((s, l) => s + l.entries.length, 0);
+    return { ...u, monthTotal, todayTotal, entryCount: count };
+  }).sort((a, b) => b.todayTotal - a.todayTotal || b.monthTotal - a.monthTotal);
+
+  const descLabel = Store.isFirebase
+    ? 'ดึงยอดของทุกคนในทีมจากระบบคลาวด์แบบเรียลไทม์ ไม่ต้องล็อกอินเครื่องเดียวกัน'
+    : 'โหมดทดลองใช้งาน (ยังไม่เชื่อมต่อคลาวด์) — แสดงเฉพาะผู้ใช้ที่เคยล็อกอินบนเครื่องนี้';
 
   root.innerHTML = `
     <div class="card" style="margin-bottom:16px">
-      <div style="font-family:var(--font-heading-en);font-size:18px;color:var(--c-dark)">ภาพรวมทีม · เดือนนี้</div>
-      <div style="font-size:12.5px;color:var(--c-brown);margin-top:4px">แสดงข้อมูลผู้ใช้ในเครื่องนี้เท่านั้น (เดโม) — เมื่อเชื่อม Supabase จริงจะเห็นข้อมูลทุกคนจากทุกอุปกรณ์</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div>
+          <div style="font-family:var(--font-heading-en);font-size:18px;color:var(--c-dark)">ภาพรวมทีม · วันนี้</div>
+          <div style="font-size:12.5px;color:var(--c-brown);margin-top:4px">${descLabel}</div>
+        </div>
+        ${Store.isFirebase ? `<button class="btn btn-ghost btn-sm" id="btn-refresh-team" ${TeamState.loading ? 'disabled' : ''}>รีเฟรช</button>` : ''}
+      </div>
     </div>
+    ${TeamState.error ? `<div class="card" style="margin-bottom:10px;color:#B3453B">${escapeHtml(TeamState.error)}</div>` : ''}
+    ${Store.isFirebase && TeamState.loading && !TeamState.rows ? '<div class="card" style="text-align:center;padding:30px;color:var(--c-brown)">กำลังโหลดข้อมูลทีม...</div>' : ''}
+    ${Store.isFirebase && !TeamState.loading && TeamState.rows && TeamState.rows.length === 0
+      ? '<div class="card" style="text-align:center;padding:30px;color:var(--c-brown)">ยังไม่มีใครในทีมล็อกอินเข้าใช้งาน ระบบจะแสดงรายชื่ออัตโนมัติเมื่อมีคนล็อกอินครั้งแรก</div>' : ''}
     ${rows.map(r => `
       <div class="card" style="margin-bottom:10px">
         <div class="ledger-item" style="border:none;padding:0">
           <div class="ledger-name">${escapeHtml(r.displayName)} ${roleBadgeHtml(r.role)}</div>
-          <div class="ledger-sub">${fmtMoney(r.monthTotal)}</div>
+          <div class="ledger-sub">${fmtMoney(r.todayTotal)}<span style="font-size:11px;color:var(--c-brown);font-weight:500"> วันนี้</span></div>
         </div>
-        <div style="font-size:12px;color:var(--c-brown);margin-top:4px">${r.entryCount} รายการสะสมทั้งหมด</div>
+        <div style="font-size:12px;color:var(--c-brown);margin-top:4px">เดือนนี้ ${fmtMoney(r.monthTotal)} · ${r.entryCount} รายการสะสมทั้งหมด</div>
       </div>`).join('')}
   `;
+
+  const refreshBtn = document.getElementById('btn-refresh-team');
+  if (refreshBtn) refreshBtn.addEventListener('click', () => { TeamState.rows = null; fetchTeamData(); rerender(); });
 }
 
 // ---------- Settings ----------
