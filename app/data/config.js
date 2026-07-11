@@ -1,9 +1,9 @@
 // กำหนดค่าการเชื่อมต่อ Firebase (สามารถนำค่าจาก Firebase Console > Project Settings มาวางแทนที่ได้เลย)
 const FIREBASE_CONFIG = {
-  apiKey: "", // <--- ใส่ API Key ของคุณที่นี่ เช่น "AIzaSy..."
+  apiKey: "AIzaSyDJKpNZmycfZAlc8YWLfB3pS-98uFeYE9U",
   authDomain: "kamue-fee-tracker.firebaseapp.com",
   projectId: "kamue-fee-tracker",
-  storageBucket: "kamue-fee-tracker.appspot.com",
-  messagingSenderId: "", // <--- ใส่ Messaging Sender ID ของคุณที่นี่ เช่น "82947194839"
-  appId: "" // <--- ใส่ App ID ของคุณที่นี่ เช่น "1:1083947192:web:ef9d849204"
+  storageBucket: "kamue-fee-tracker.firebasestorage.app",
+  messagingSenderId: "542071326038",
+  appId: "1:542071326038:web:aa8b156a5fb6e030af02f7"
 };
