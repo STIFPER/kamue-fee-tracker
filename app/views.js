@@ -471,7 +471,14 @@ function renderSettings(root, user) {
           <span class="role-badge">${roleLabel(user.role)}</span>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--c-brown);margin-top:10px">ตอนนี้เข้าสู่ระบบแบบเดโม (ยังไม่เชื่อม Google) — Role จริงจะถูกกำหนดโดย Admin เมื่อระบบเชื่อมต่อ Supabase</div>
+      ${Store.isFirebase ? `
+        <div style="font-size:12px;color:var(--c-brown);margin-top:10px;display:flex;flex-direction:column;gap:4px">
+          <span>เชื่อมต่อ Cloud Firestore แล้ว</span>
+          <span style="opacity:0.8">อีเมล: ${escapeHtml(user.email || '')}</span>
+        </div>
+      ` : `
+        <div style="font-size:12px;color:var(--c-brown);margin-top:10px">ตอนนี้เข้าสู่ระบบแบบเดโม (ยังไม่เชื่อม Google) — บันทึกข้อมูลบนเครื่องนี้เท่านั้น</div>
+      `}
     </div>
 
     <div class="card" style="margin-bottom:16px">
