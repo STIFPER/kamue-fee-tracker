@@ -21,6 +21,7 @@
 
   --ease-out: cubic-bezier(.16, 1, .3, 1); /* motion premium: expo-out, ใช้กับ drawer/modal/toast */
   --ease-standard: cubic-bezier(.4, 0, .2, 1);
+  --ease-bounce: cubic-bezier(.34, 1.56, .64, 1); /* overshoot เล็กน้อยสำหรับ scroll-reveal ให้ความรู้สึก "เด้ง" */
   --dur-fast: 150ms;
   --dur-base: 220ms;
   --dur-slow: 320ms;
@@ -402,6 +403,14 @@ button { cursor: pointer; }
   .app { padding-bottom: 0; }
 }
 
+/* ===== Scroll reveal (มือถือไม่มี hover จึงใช้ scroll เข้าจอแทนเพื่อให้กรอบ "เด้ง" เหมือนตอน hover บนเดสก์ท็อป) ===== */
+.reveal-pop.reveal-init { opacity: 0; transform: translateY(16px) scale(.95); }
+.reveal-pop.revealed { animation: revealPop .6s var(--ease-bounce) forwards; }
+@keyframes revealPop {
+  from { opacity: 0; transform: translateY(16px) scale(.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
 /* ===== Cards ===== */
 .card {
   background: var(--glass-sheen-light), var(--glass-light);
@@ -550,10 +559,14 @@ button { cursor: pointer; }
 .today-amount { font-family: var(--font-heading-en), var(--font-th); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 34px; margin-top: 2px; line-height: 1.05; }
 
 .stat-strip { display: flex; padding: 0; overflow: hidden; }
-.stat-seg { flex: 1; padding: 16px 18px; text-align: center; }
+.stat-seg { flex: 1; min-width: 0; padding: 14px 8px; text-align: center; }
 .stat-seg + .stat-seg { border-left: 1px solid var(--glass-border); }
-.stat-seg .label { font-size: 12px; color: var(--c-brown); }
-.stat-seg .value { font-family: var(--font-heading-en), var(--font-th); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 24px; color: var(--c-dark); margin-top: 4px; }
+.stat-seg .label { font-size: 12px; color: var(--c-brown); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-seg .value {
+  font-family: var(--font-heading-en), var(--font-th); font-weight: 700; font-variant-numeric: tabular-nums;
+  font-size: clamp(15px, 4.6vw, 24px); color: var(--c-dark); margin-top: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .stat-seg .sub { font-size: 11.5px; color: var(--c-accent); margin-top: 2px; }
 
 .section-label { font-size: 11px; letter-spacing: .02em; text-transform: uppercase; color: var(--c-accent); margin: 20px 0 10px; }

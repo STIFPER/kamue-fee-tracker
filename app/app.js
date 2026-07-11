@@ -206,6 +206,23 @@ function renderDrawerProfile(user) {
   box.innerHTML = `<div class="drawer-profile-name">${escapeHtml(user.displayName)}</div><div class="drawer-profile-role">${roleBadgeHtml(user.role)}</div>`;
 }
 
+// ===== Scroll reveal: กรอบ (.card) เด้งเข้าจอทีละใบตอนเลื่อนผ่าน — แทนที่ hover ที่มือถือไม่มี =====
+// เรียกเฉพาะตอนเปลี่ยนหน้า (changedView) ไม่ใช่ทุกครั้งที่ rerender() ภายในหน้าเดิม กันไม่ให้กรอบกะพริบซ้ำตอนพิมพ์/กด +/-
+function initScrollReveal(root) {
+  const targets = root.querySelectorAll('.card, .card-dark');
+  if (!('IntersectionObserver' in window) || targets.length === 0) return;
+  targets.forEach(el => el.classList.add('reveal-pop', 'reveal-init'));
+  const io = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.remove('reveal-init');
+      entry.target.classList.add('revealed');
+      obs.unobserve(entry.target);
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
+  targets.forEach(el => io.observe(el));
+}
+
 function render() {
   const user = Store.getActiveUser();
   if (!user) { boot(); return; }
@@ -232,6 +249,7 @@ function render() {
     void root.offsetWidth; // reflow เพื่อรีสตาร์ท animation
     root.classList.add('view-enter');
     window.scrollTo(0, 0);
+    initScrollReveal(root);
   }
 }
 
