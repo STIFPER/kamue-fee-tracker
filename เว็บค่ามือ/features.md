@@ -1,0 +1,21 @@
+# Features
+
+- Login Google
+- Dashboard
+- Daily Entry
+- History
+- Calendar
+- Weekly Summary
+- Monthly Summary
+- Report
+- Export PDF
+- Export Excel
+- Notification
+- Search
+- Filter
+- Favorite Procedure
+- Duplicate Yesterday
+- Auto Save
+- Dark Mode (Future)
+- PWA
+- Offline Support

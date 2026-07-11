@@ -1,0 +1,11 @@
+# OS files
+.DS_Store
+Thumps.db
+
+# Agent files
+.claude/
+.agents/
+
+# Backup and ZIP archives
+*.zip
+*.csv

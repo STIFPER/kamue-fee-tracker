@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===== Helper Functions =====
+    
+    // Checks if the user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Safely retrieves user profile data
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // Safely retrieves the user role from Firestore profile
+    function getUserRole() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        ? getUserData().role 
+        : null;
+    }
+
+    // Checks if the authenticated user is the owner of the resource
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Checks if user is Admin
+    function isAdmin() {
+      return getUserRole() == 'admin';
+    }
+
+    // Checks if user is Super Admin
+    function isSuperAdmin() {
+      return getUserRole() == 'super_admin';
+    }
+
+    // Checks if user is either Admin or Super Admin
+    function isStaff() {
+      return isAdmin() || isSuperAdmin();
+    }
+
+    // ===== Collection Security Rules =====
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isStaff());
+      
+      // Prevent role escalation: first-time users default to 'assistant'
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.role == 'assistant';
+      
+      // Regular users cannot modify their own roles (must keep it unchanged)
+      // Admins and Super Admins can modify any user's role
+      allow update: if isSignedIn() && (
+        (isOwner(userId) && request.resource.data.role == resource.data.role) || 
+        isStaff()
+      );
+      
+      allow delete: if isSuperAdmin();
+
+      // Subcollection: logs (Daily Records)
+      // Path: /users/{userId}/logs/{dateStr}
+      match /logs/{dateStr} {
+        allow read, write: if isOwner(userId) || isStaff();
+      }
+
+      // Subcollection: settings
+      // Path: /users/{userId}/settings/{settingId}
+      match /settings/{settingId} {
+        allow read, write: if isOwner(userId) || isStaff();
+      }
+    }
+
+    // Procedures Collection
+    match /procedures/{procedureId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // Categories Collection
+    match /categories/{categoryId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // Announcements Collection
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // Audit Logs Collection
+    match /audit_logs/{logId} {
+      allow read: if isStaff();
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Audit logs must be immutable
+    }
+
+    // Rates Collection
+    match /rates/{rateId} {
+      allow read: if isSignedIn();
+      allow write: if isStaff();
+    }
+
+    // Alternative flat collection: daily_records (if subcollections are not used)
+    match /daily_records/{recordId} {
+      allow read: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaff());
+      allow create: if isSignedIn() && (request.resource.data.userId == request.auth.uid || isStaff());
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && request.resource.data.userId == request.auth.uid) || 
+        isStaff()
+      );
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isStaff());
+    }
+  }
+}
