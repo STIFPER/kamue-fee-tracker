@@ -114,7 +114,7 @@ function renderOnboardingSwitch() {
   const users = Object.values(Store._db.users);
   const box = document.getElementById('onboarding-switch');
   if (users.length === 0) { box.innerHTML = ''; return; }
-  box.innerHTML = '<div class="section-label" style="text-align:left">บัญชีที่เคยใช้ในเครื่องนี้</div>' +
+  box.innerHTML = '<div class="section-label" style="text-align:left;font-size:11.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--c-brown);margin-top:24px;margin-bottom:8px;font-weight:600;">Recent Logins</div>' +
     users.map(u => `
       <div class="profile-pick-item">
         <span>${escapeHtml(u.displayName)} <span class="role-badge">${roleLabel(u.role)}</span></span>
