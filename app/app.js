@@ -164,10 +164,37 @@ function renderNav(user) {
   if (openBtn) openBtn.addEventListener('click', openDrawer);
 }
 
+function getAnimalAvatar(name) {
+  const animals = [
+    // Cat
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;color:#D4A373"><path d="M12 21c-4.4 0-8-3.6-8-8 0-1.8.6-3.5 1.7-4.9L4 3l4.6 2C9.6 4.4 10.8 4 12 4s2.4.4 3.4 1l4.6-2-1.7 5.1c1.1 1.4 1.7 3.1 1.7 4.9 0 4.4-3.6 8-8 8z"/><path d="M9 12h.01M15 12h.01M12 14.5l-1-1h2l-1 1z"/></svg>',
+    // Fox
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;color:#E07A5F"><path d="M12 21c-4.4 0-8-3.6-8-8 0-1.8.6-3.5 1.7-4.9L3 3l5.1 2.7C9.5 4.6 10.7 4 12 4s2 1.2 3.4 2.3L21 3l-2.7 5.1c1.1 1.4 1.7 3.1 1.7 4.9 0 4.4-3.6 8-8 8z"/><path d="M9.5 12h.01M14.5 12h.01M12 15l-1-1h2l-1 1z"/></svg>',
+    // Panda
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;color:#3D405B"><path d="M12 21c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/><path d="M6 5c-.8.8-1.3 2-1 3 .5 1.5 2 2.5 3.5 2M18 5c.8.8 1.3 2 1 3-.5 1.5-2 2.5-3.5 2M9 12.5c-.3 0-.5-.2-.5-.5s.2-.5.5-.5.5.2.5.5-.2.5-.5.5zM15 12.5c-.3 0-.5-.2-.5-.5s.2-.5.5-.5.5.2.5.5-.2.5-.5.5zM12 15l-1-1h2l-1 1z"/></svg>',
+    // Koala
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;color:#9EAFB8"><path d="M12 21c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/><path d="M4 10c-1.2 0-2.2-.8-2.2-1.8s1-1.8 2.2-1.8c.6 0 1.1.2 1.5.6M20 10c1.2 0 2.2-.8 2.2-1.8s-1-1.8-2.2-1.8c-.6 0-1.1.2-1.5.6M9 12.5h.01M15 12.5h.01M12 14.5c-.6 0-1 .4-1 1h2c0-.6-.4-1-1-1z"/></svg>',
+    // Rabbit
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;color:#E0AFA0"><path d="M12 21c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/><path d="M8 5C8 3 9 1 10 1s2 2 2 4v4H8V5zM12 9v-4c0-2 1-4 2-4s2 2 2 4v4h-4zM9 13h.01M15 13h.01M12 15.5l-1-.5h2l-1 .5z"/></svg>',
+    // Bear
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;color:#8C654B"><path d="M12 21c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/><path d="M5.5 7.5C4.7 7.5 4 6.8 4 6s.7-1.5 1.5-1.5 1.5.7 1.5 1.5-.7 1.5-1.5 1.5zM18.5 7.5c-.8 0-1.5-.7-1.5-1.5s.7-1.5 1.5-1.5 1.5.7 1.5 1.5S19.3 7.5 18.5 7.5zM9 12h.01M15 12h.01M12 15c-.6 0-1-.4-1-1s.4-.5 1-.5 1 .1 1 .5-.4 1-1 1z"/></svg>',
+    // Lion
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;color:#E29578"><path d="M12 17c-2.8 0-5-2.2-5-5s2.2-5 5-5 5 2.2 5 5-2.2 5-5 5z"/><path d="M12 2v3M12 19v3M5 12H2M22 12h-3M6.3 6.3l2.1 2.1M15.6 15.6l2.1 2.1M6.3 17.7l2.1-2.1M15.6 8.4l2.1-2.1M9.5 11h.01M14.5 11h.01M12 13.5l-1-1h2l-1 1z"/></svg>',
+    // Dog
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px;color:#C5A880"><path d="M12 21c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z"/><path d="M5 8c-.6 0-1 .4-1 1v4c0 1 .5 2 1.5 2.5M19 8c.6 0 1 .4 1 1v4c0 1-.5 2-1.5 2.5M9 12h.01M15 12h.01M12 16c-.6 0-1-.4-1-1h2c0 .6-.4 1-1 1z"/></svg>'
+  ];
+  let sum = 0;
+  const cleanName = (name || '?').trim();
+  for (let i = 0; i < cleanName.length; i++) {
+    sum += cleanName.charCodeAt(i);
+  }
+  return animals[sum % animals.length];
+}
+
 function renderProfileChip(user) {
   const chip = document.getElementById('btn-profile');
-  const initial = (user.displayName || '?').trim().charAt(0).toUpperCase();
-  chip.innerHTML = `<span class="avatar">${initial}</span><span>${escapeHtml(user.displayName)}</span>`;
+  const avatarSvg = getAnimalAvatar(user.displayName);
+  chip.innerHTML = `<span class="avatar">${avatarSvg}</span><span>${escapeHtml(user.displayName)}</span>`;
   chip.onclick = () => navigate('settings');
 }
 

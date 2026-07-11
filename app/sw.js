@@ -1,5 +1,5 @@
 // Service Worker: cache-first สำหรับ app shell เพื่อให้เปิดใช้งานได้แม้ไม่มีเน็ต (features.md > Offline Support)
-const CACHE_NAME = 'kamue-app-v7';
+const CACHE_NAME = 'kamue-app-v15';
 const SHELL = [
   './',
   './index.html',
@@ -27,16 +27,21 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  
+  // Network-First Strategy: try to fetch from network first, fallback to cache if offline
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((res) => {
+    fetch(event.request)
+      .then((res) => {
+        // If fetch is successful, clone and update the cache
         if (res.ok && event.request.url.startsWith(self.location.origin)) {
           const copy = res.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         }
         return res;
-      }).catch(() => cached);
-    })
+      })
+      .catch(() => {
+        // If network fails (offline), return cached version
+        return caches.match(event.request);
+      })
   );
 });

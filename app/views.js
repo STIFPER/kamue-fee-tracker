@@ -1,5 +1,16 @@
 // ===== View render functions =====
 
+function getTierIcon(tierKey) {
+  const icons = {
+    bronze: '<svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/></svg>', // 4-point spark/star
+    silver: '<svg viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px"><path d="M9 4l1.5 4.5L15 10l-4.5 1.5L9 16l-1.5-4.5L3 10l4.5-1.5zM19 12l1 3 3 1-3 1-1 3-1-3-3-1 3-1z"/></svg>', // double spark
+    gold: '<svg viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>', // star
+    platinum: '<svg viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px"><path d="M12 2L16 6L21 4L19 13H5L3 4L8 6L12 2zM5 15h14v2H5zM5 19h14v2H5z"/></svg>', // crown
+    diamond: '<svg viewBox="0 0 24 24" fill="currentColor" style="width:22px;height:22px"><path d="M6 2l-4 6 10 14 10-14-4-6H6zm1.2 2h9.6l2.7 4H4.5l2.7-4z"/></svg>', // diamond cut gem
+  };
+  return icons[tierKey] || '';
+}
+
 function proceduresIndex(user) {
   const map = {};
   for (const p of Store.getProcedures()) map[p.id] = p;
@@ -27,7 +38,7 @@ function renderDashboard(root, user) {
   const todayCount = todayLog ? todayLog.entries.length : 0;
 
   const { tier, next, progressPct } = currentTier(monthTotal, TIERS);
-  const remainLabel = next ? `อีก ${fmtMoney(next.min - monthTotal)} ถึง ${next.th}` : 'ระดับสูงสุด ✦';
+  const remainLabel = next ? `อีก ${fmtMoney(next.min - monthTotal)} ถึง ${next.th}` : 'ระดับสูงสุด';
 
   const recentDays = dailySeries(logs, addDays(today, -6), today).reverse();
 
@@ -41,10 +52,9 @@ function renderDashboard(root, user) {
                 <div class="kicker">ระดับเดือนนี้ · Tier</div>
                 <div class="tier-name">${tier.th} <span class="en">· ${tier.en}</span></div>
               </div>
-              <div class="tier-badge">${tier.badge}</div>
             </div>
             <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%"></div></div>
-            <div class="progress-meta"><span>${moneySpan('dash-tier-month', monthTotal)} · เดือนนี้</span><span>${remainLabel}</span></div>
+            <div class="progress-meta"><span>${progressPct}% · ${moneySpan('dash-tier-month', monthTotal)} สะสม</span><span>${remainLabel}</span></div>
           </div>
           <div class="hero-today card-dark">
             <div class="kicker">รายได้วันนี้ · Today</div>
@@ -104,7 +114,7 @@ function renderEntry(root, user) {
       <input type="date" class="date-input" id="date-picker" value="${UI.entryDate}">
       <button class="btn btn-ghost btn-sm" id="btn-next-day">›</button>
       <button class="btn btn-secondary btn-sm" id="btn-today">วันนี้</button>
-      ${canDuplicate ? '<button class="btn btn-ghost btn-sm" id="btn-duplicate">↺ ทำซ้ำเมื่อวาน</button>' : ''}
+      ${canDuplicate ? '<button class="btn btn-ghost btn-sm" id="btn-duplicate">Duplicate Yesterday</button>' : ''}
     </div>
     <div style="font-size:13px;color:var(--c-brown);margin-bottom:10px">${thaiDateLabel(dateObj)}</div>
 
@@ -263,6 +273,7 @@ function renderHistory(root, user) {
   }
 
   const weeks = weekGroupsOfMonth(year, month, logs);
+  const historyMonthTotal = sumRange(logs, new Date(year, month, 1), new Date(year, month + 1, 0));
   const selected = UI.historySelectedDay;
   const selectedLog = Store.getLog(selected) || (function () {
     const u = Store.getActiveUser(); return u.logs[selected] || { entries: [] };
@@ -271,33 +282,61 @@ function renderHistory(root, user) {
   const selectedTotal = selectedLog.entries.reduce((s, e) => s + e.subtotal, 0);
 
   root.innerHTML = `
-    <div class="month-nav">
-      <button id="btn-prev-month">‹</button>
-      <div class="month-label">${THAI_MONTHS[month]} ${year + 543}</div>
-      <button id="btn-next-month">›</button>
-    </div>
-    <div class="calendar-grid">
-      ${THAI_DAYS_SHORT.map(d => `<div class="cal-dow">${d}</div>`).join('')}
-      ${cells}
-    </div>
-
-    <div class="section-label">สรุปรายสัปดาห์</div>
-    <div class="card">
-      ${weeks.map(w => `<div class="ledger-item"><div class="ledger-name">${w.label}</div><div class="ledger-sub">${fmtMoney(w.total)}</div></div>`).join('')}
+    <div class="calendar-container">
+      <div class="month-nav">
+        <button id="btn-prev-month">‹</button>
+        <div class="month-label">${THAI_MONTHS[month]} ${year + 543}</div>
+        <button id="btn-next-month">›</button>
+      </div>
+      <div class="calendar-grid">
+        ${THAI_DAYS_SHORT.map(d => `<div class="cal-dow">${d}</div>`).join('')}
+        ${cells}
+      </div>
     </div>
 
-    <div class="section-label">${thaiDateLabel(parseDateStr(selected))}</div>
-    <div class="card day-detail">
-      ${selectedLog.entries.length === 0 ? '<div class="ledger-empty">ไม่มีรายการในวันนี้</div>' : selectedLog.entries.map(e => {
-        const p = procIndex[e.procId]; if (!p) return '';
-        const detail = p.isHourly ? `${Math.round(e.minutes)} นาที · ฿${e.feeSnapshot}/ชม` : `${e.quantity} × ฿${e.feeSnapshot}`;
-        return `<div class="ledger-item">
-          <div style="min-width:0;flex:1"><div class="ledger-name">${escapeHtml(p.name)}</div><div class="ledger-detail">${detail}</div></div>
-          <div class="ledger-controls"><span class="ledger-sub">${fmtMoney(e.subtotal)}</span><button data-remove="${e.procId}">✕</button></div>
-        </div>`;
-      }).join('')}
-      <div class="ledger-total-row"><span style="font-size:13px;color:var(--c-brown)">รวมวันนี้</span><span class="amount">${fmtMoney(selectedTotal)}</span></div>
-      <button class="btn btn-secondary btn-block" id="btn-edit-day" style="margin-top:14px">แก้ไขในหน้าบันทึกงาน</button>
+    <div class="calendar-container">
+      <div class="section-label">สรุปรายสัปดาห์ · Weekly Summary</div>
+      <div class="weekly-summary-list">
+        ${weeks.map((w, idx) => {
+          const pct = historyMonthTotal > 0 ? (w.total / historyMonthTotal) * 100 : 0;
+          return `
+            <div class="weekly-summary-item">
+              <div class="weekly-badge w${idx + 1}">W${idx + 1}</div>
+              <div class="weekly-info">
+                <div class="weekly-title">${w.label}</div>
+                <div class="weekly-progress-track">
+                  <div class="weekly-progress-fill" style="width:${pct}%"></div>
+                </div>
+              </div>
+              <div class="weekly-amount">${fmtMoney(w.total)}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="section-label">${thaiDateLabel(parseDateStr(selected))}</div>
+      <div class="day-detail-list">
+        ${selectedLog.entries.length === 0 ? '<div class="ledger-empty">ไม่มีรายการในวันนี้</div>' : selectedLog.entries.map(e => {
+          const p = procIndex[e.procId]; if (!p) return '';
+          const detail = p.isHourly ? `${Math.round(e.minutes)} นาที · ฿${e.feeSnapshot}/ชม` : `${e.quantity} × ฿${e.feeSnapshot}`;
+          return `
+            <div class="day-detail-item">
+              <div style="min-width:0;flex:1">
+                <div class="ledger-name">${escapeHtml(p.name)}</div>
+                <div class="ledger-detail">${detail}</div>
+              </div>
+              <div class="ledger-controls" style="align-items:center;">
+                <span class="ledger-sub" style="font-weight:700;">${fmtMoney(e.subtotal)}</span>
+                <button class="btn-remove-day-item" data-remove="${e.procId}">✕</button>
+              </div>
+            </div>`;
+        }).join('')}
+        <div class="day-detail-total">
+          <span style="font-size:13.5px;color:var(--c-brown)">รวมวันนี้ · Daily Total</span>
+          <span class="amount">${fmtMoney(selectedTotal)}</span>
+        </div>
+        <button class="btn btn-secondary btn-block" id="btn-edit-day" style="margin-top:16px">แก้ไขในหน้าบันทึกงาน</button>
+      </div>
     </div>
   `;
 
@@ -338,6 +377,17 @@ function renderReports(root, user) {
   const maxCat = Math.max(1, ...catList.map(c => c.total));
 
   const weeks = weekGroupsOfMonth(year, month, logs);
+  const maxWeeklyTotal = Math.max(1, ...weeks.map(w => w.total));
+
+  const CATEGORY_COLORS = {
+    Laser: '#D28B72',      // Rose Gold
+    Injection: '#D9B382',  // Warm Gold/Amber
+    Treatment: '#87BFA2',  // Soft Sage Green
+    'Pre-op': '#8CA0E2',   // Soft Blue
+    OR: '#B295C5',         // Soft Purple
+    Other: '#B29A8A',      // Warm Muted Gray
+  };
+
   const insights = [];
   if (bestAvg > 0) insights.push(`วัน${THAI_DAYS[bestWeekday]}เป็นวันที่คุณทำรายได้เฉลี่ยดีที่สุด (${fmtMoney(bestAvg)}/วัน)`);
   if (catList[0] && catList[0].total > 0) insights.push(`หมวดที่ทำเงินให้มากที่สุดเดือนนี้คือ “${catList[0].th}” (${fmtMoney(catList[0].total)}, ${Math.round(catList[0].total / (monthTotal || 1) * 100)}% ของยอดรวม)`);
@@ -359,42 +409,109 @@ function renderReports(root, user) {
   if (topFeeProc) insights.push(`ถ้าอยากได้ค่ามือเพิ่มไว ลองรับเคส “${topFeeProc.name}” เพิ่ม (฿${topFeeProc.fee} · ${topFeeProc.unit})`);
 
   root.innerHTML = `
-    <div class="month-nav">
+    <div class="month-nav" style="margin-bottom:24px">
       <button id="btn-prev-month">‹</button>
       <div class="month-label">${THAI_MONTHS[month]} ${year + 543}</div>
       <button id="btn-next-month">›</button>
     </div>
 
     <div class="stat-row">
-      <div class="card stat-card"><div class="label">ยอดรวมเดือนนี้</div><div class="value">${moneySpan('reports-total', monthTotal)}</div></div>
-      <div class="card stat-card"><div class="label">เฉลี่ย/วันที่ทำงาน</div><div class="value">${moneySpan('reports-avg', avgPerActiveDay)}</div><div class="sub">${activeDays} วันที่มีงาน</div></div>
+      <div class="card stat-card">
+        <div class="kicker">ยอดรวมเดือนนี้ · Total Revenue</div>
+        <div class="value">${moneySpan('reports-total', monthTotal)}</div>
+      </div>
+      <div class="card stat-card">
+        <div class="kicker">เฉลี่ย/วันที่ทำงาน · Active Average</div>
+        <div class="value">${moneySpan('reports-avg', avgPerActiveDay)}</div>
+        <div class="sub">${activeDays} วันที่บันทึกเคส</div>
+      </div>
+    </div>
+
+    <div class="card chart-card">
+      <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);font-weight:700">รายได้รายสัปดาห์ · Weekly Chart</div>
+      <div class="chart-container">
+        <div class="chart-y-axis">
+          <span>${fmtMoney(maxWeeklyTotal)}</span>
+          <span>${fmtMoney(maxWeeklyTotal / 2)}</span>
+          <span>฿0</span>
+        </div>
+        <div class="chart-bars">
+          ${weeks.map((w, i) => {
+            const pct = maxWeeklyTotal > 0 ? (w.total / maxWeeklyTotal) * 100 : 0;
+            const barHeight = Math.max(4, pct);
+            const isNonZero = w.total > 0;
+            return `
+              <div class="chart-bar-wrapper">
+                <div class="chart-bar-fill-val" style="color:${isNonZero ? 'var(--c-dark)' : 'var(--c-accent)'}">${isNonZero ? fmtMoney(w.total) : '—'}</div>
+                <div class="chart-bar-track">
+                  <div class="chart-bar-fill" style="height:${barHeight}%; background:${isNonZero ? 'linear-gradient(180deg, var(--c-accent) 0%, var(--c-brown) 100%)' : 'rgba(110, 89, 75, 0.08)'}"></div>
+                </div>
+                <div class="chart-bar-label">W${i + 1}</div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
     </div>
 
     <div class="grid-2">
       <div class="card">
-        <div style="font-family:var(--font-heading-en);font-size:18px;color:var(--c-dark);margin-bottom:8px">สัดส่วนตามหมวด</div>
-        ${catList.map(c => `
-          <div class="bar-row">
-            <div class="bar-label">${c.th}</div>
-            <div class="bar-track"><div class="bar-fill" style="width:${Math.round(c.total / maxCat * 100)}%"></div></div>
-            <div class="bar-value">${fmtMoney(c.total)}</div>
-          </div>`).join('')}
+        <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สัดส่วนตามหมวด · Categories</div>
+        ${catList.map(c => {
+          const barPct = Math.round(c.total / maxCat * 100);
+          const pctOfTotal = monthTotal > 0 ? Math.round(c.total / monthTotal * 100) : 0;
+          const color = CATEGORY_COLORS[c.key] || '#B89C82';
+          return `
+            <div class="bar-row">
+              <div class="bar-label">
+                <span class="bar-color-dot" style="background:${color}"></span>
+                <span>${c.th}</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:${barPct}%; background:linear-gradient(90deg, ${color} 0%, rgba(255,255,255,0.4) 100%)"></div>
+              </div>
+              <div class="bar-value">
+                <span>${fmtMoney(c.total)}</span>
+                <span style="font-size:10px;color:var(--c-brown);margin-left:4px;font-weight:500;">(${pctOfTotal}%)</span>
+              </div>
+            </div>`;
+        }).join('')}
       </div>
+
       <div class="card">
-        <div style="font-family:var(--font-heading-en);font-size:18px;color:var(--c-dark);margin-bottom:8px">สรุปรายสัปดาห์</div>
-        ${weeks.map(w => `<div class="ledger-item"><div class="ledger-name">${w.label}</div><div class="ledger-sub">${fmtMoney(w.total)}</div></div>`).join('')}
+        <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สรุปรายสัปดาห์ · Weekly Breakdown</div>
+        <div class="weekly-list">
+          ${weeks.map((w, i) => {
+            const weekPct = monthTotal > 0 ? Math.round(w.total / monthTotal * 100) : 0;
+            const weekRange = w.label.substring(w.label.indexOf('('));
+            return `
+              <div class="weekly-item-row">
+                <div class="week-badge">W${i + 1}</div>
+                <div class="week-info">
+                  <div class="label">${w.label.split(' (')[0]}</div>
+                  <div class="pct">${weekRange} · ${weekPct}% ของทั้งเดือน</div>
+                </div>
+                <div class="week-contribution-track">
+                  <div class="week-contribution-fill" style="width:${weekPct}%; background:${weekPct > 0 ? 'var(--c-brown)' : 'transparent'}"></div>
+                </div>
+                <div class="value">${fmtMoney(w.total)}</div>
+              </div>`;
+          }).join('')}
+        </div>
       </div>
     </div>
 
-    <div class="section-label">ข้อสังเกต · Insight</div>
+    <div class="section-label" style="margin-top:28px">ข้อสังเกต · Insights</div>
     <div class="insight-list">
-      ${insights.length === 0 ? '<div class="insight-item">ยังไม่มีข้อมูลพอสำหรับสรุปผลเดือนนี้</div>' : insights.map(i => `<div class="insight-item">${i}</div>`).join('')}
+      ${insights.length === 0 
+        ? '<div class="insight-item">ยังไม่มีข้อมูลเพียงพอสำหรับการสรุปวิเคราะห์รายเดือน</div>' 
+        : insights.map(i => `<div class="insight-item">${i}</div>`).join('')}
     </div>
 
-    <div class="section-label">ส่งออกรายงาน</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="btn btn-secondary" id="btn-export-csv">⬇ Export CSV</button>
-      <button class="btn btn-ghost" id="btn-print">🖨 พิมพ์ / บันทึกเป็น PDF</button>
+    <div class="section-label" style="margin-top:28px">ส่งออกรายงาน · Export</div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="btn btn-secondary" id="btn-export-csv">Export CSV</button>
+      <button class="btn btn-ghost" id="btn-print">Print / Save as PDF</button>
     </div>
   `;
 
