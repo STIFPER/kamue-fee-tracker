@@ -8,7 +8,7 @@
   --c-darkest: #241B18;   /* ข้อความเข้มสุด (ห้ามใช้ดำสนิท) */
   --c-white: #F8F6F3;     /* พื้นผิวการ์ด (ห้ามใช้ขาวสนิท) */
 
-  --font-th: 'Noto Sans Thai', sans-serif;
+  --font-th: 'Sukhumvit Set', 'Noto Sans Thai', sans-serif;
   --font-heading-en: 'Inter', sans-serif;
   --font-body-en: 'Inter', sans-serif;
 
