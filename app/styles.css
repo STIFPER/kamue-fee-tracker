@@ -21,7 +21,7 @@
 
   --ease-out: cubic-bezier(.16, 1, .3, 1); /* motion premium: expo-out, ใช้กับ drawer/modal/toast */
   --ease-standard: cubic-bezier(.4, 0, .2, 1);
-  --ease-bounce: cubic-bezier(.34, 1.56, .64, 1); /* overshoot เล็กน้อยสำหรับ scroll-reveal ให้ความรู้สึก "เด้ง" */
+  --ease-bounce: cubic-bezier(.22, 1.2, .36, 1); /* overshoot อ่อนๆ สำหรับ scroll-reveal ให้ความรู้สึก "เด้ง" แต่ไม่หนัก */
   --dur-fast: 150ms;
   --dur-base: 220ms;
   --dur-slow: 320ms;
@@ -403,11 +403,12 @@ button { cursor: pointer; }
   .app { padding-bottom: 0; }
 }
 
-/* ===== Scroll reveal (มือถือไม่มี hover จึงใช้ scroll เข้าจอแทนเพื่อให้กรอบ "เด้ง" เหมือนตอน hover บนเดสก์ท็อป) ===== */
-.reveal-pop.reveal-init { opacity: 0; transform: translateY(16px) scale(.95); }
-.reveal-pop.revealed { animation: revealPop .6s var(--ease-bounce) forwards; }
+/* ===== Scroll reveal (มือถือไม่มี hover จึงใช้ scroll เข้าจอแทนเพื่อให้กรอบ "เด้ง" เหมือนตอน hover บนเดสก์ท็อป)
+   ใช้เฉพาะกรอบที่ "ยังไม่อยู่ในจอ" ตอนโหลด (ดู initScrollReveal) กรอบที่เห็นอยู่แล้วปล่อยให้ view-enter จัดการ กันการเด้งซ้อน */
+.reveal-pop.reveal-init { opacity: 0; transform: translateY(12px) scale(.98); }
+.reveal-pop.revealed { animation: revealPop .5s var(--ease-bounce) both; }
 @keyframes revealPop {
-  from { opacity: 0; transform: translateY(16px) scale(.95); }
+  from { opacity: 0; transform: translateY(12px) scale(.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 

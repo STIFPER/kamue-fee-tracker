@@ -31,6 +31,8 @@ const UI = {
 };
 
 let lastRenderedView = null;
+// แอปถูก mount (โชว์หน้าจอหลัก) ไปแล้วหรือยัง — ใช้กันไม่ให้เอฟเฟกต์เข้าหน้าเล่นซ้ำตอน Firebase sync เบื้องหลัง
+let appMounted = false;
 
 function currentView() {
   const h = location.hash.replace('#/', '');
@@ -94,12 +96,14 @@ function boot() {
   if (!user) {
     onboarding.classList.remove('hidden');
     app.classList.add('hidden');
+    appMounted = false;
     renderOnboardingSwitch();
     return;
   }
   onboarding.classList.add('hidden');
   app.classList.remove('hidden');
   lastRenderedView = null;
+  appMounted = true;
   renderNav(user);
   renderProfileChip(user);
   renderDrawerProfile(user);
@@ -208,19 +212,31 @@ function renderDrawerProfile(user) {
 
 // ===== Scroll reveal: กรอบ (.card) เด้งเข้าจอทีละใบตอนเลื่อนผ่าน — แทนที่ hover ที่มือถือไม่มี =====
 // เรียกเฉพาะตอนเปลี่ยนหน้า (changedView) ไม่ใช่ทุกครั้งที่ rerender() ภายในหน้าเดิม กันไม่ให้กรอบกะพริบซ้ำตอนพิมพ์/กด +/-
+let revealObserver = null;
 function initScrollReveal(root) {
-  const targets = root.querySelectorAll('.card, .card-dark');
-  if (!('IntersectionObserver' in window) || targets.length === 0) return;
-  targets.forEach(el => el.classList.add('reveal-pop', 'reveal-init'));
-  const io = new IntersectionObserver((entries, obs) => {
+  if (revealObserver) { revealObserver.disconnect(); revealObserver = null; }
+  if (!('IntersectionObserver' in window)) return;
+  // เคารพผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว — ไม่ซ่อน/ไม่เด้ง
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  revealObserver = new IntersectionObserver((entries, obs) => {
     entries.forEach(entry => {
       if (!entry.isIntersecting) return;
       entry.target.classList.remove('reveal-init');
       entry.target.classList.add('revealed');
       obs.unobserve(entry.target);
     });
-  }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
-  targets.forEach(el => io.observe(el));
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+
+  root.querySelectorAll('.card, .card-dark').forEach(el => {
+    // ข้ามกรอบที่ซ่อนอยู่ (เช่นอยู่ใน <details> ที่ยังไม่เปิด) — ให้มันโผล่เต็มตัวตอนกางเอง
+    if (el.offsetParent === null) return;
+    // กรอบที่อยู่ในจอตั้งแต่แรก ปล่อยให้ view-enter เฟดจัดการ ไม่ต้องเด้งซ้อน (กันกระพริบตอนโหลด)
+    if (el.getBoundingClientRect().top < vh * 0.9) return;
+    el.classList.add('reveal-pop', 'reveal-init');
+    revealObserver.observe(el);
+  });
 }
 
 function render() {
@@ -300,50 +316,49 @@ document.getElementById('btn-confirm-name').addEventListener('click', () => {
 
 boot();
 
+// แสดงหน้าจอหลักให้ผู้ใช้ — ถ้าเพิ่ง mount ครั้งแรก (appMounted=false) ให้เล่นเอฟเฟกต์เข้าหน้า
+// ถ้า mount ไปแล้ว (เช่น boot() เรนเดอร์จาก cache ไปก่อน) ให้อัปเดตเนื้อหาเงียบๆ ตัวเลขวิ่งนุ่ม ไม่เล่นเอฟเฟกต์ซ้ำ = ไม่กระพริบ
+function showUser(user) {
+  document.getElementById('onboarding').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  if (!appMounted) { appMounted = true; lastRenderedView = null; }
+  renderNav(user);
+  renderProfileChip(user);
+  renderDrawerProfile(user);
+  render();
+}
+
 // การผูก Auth Event Listener ของ Firebase (ทำงานเฉพาะเมื่อใส่ Config)
 if (Store.isFirebase) {
   const loader = document.getElementById('loader');
-  loader.classList.remove('hidden');
 
   auth.onAuthStateChanged(async (firebaseUser) => {
     if (firebaseUser) {
+      // โชว์ loader เฉพาะ cold start (ยังไม่มีอะไรบนจอ) — ถ้า boot() เรนเดอร์จาก cache ไปแล้ว ให้ซิงค์เบื้องหลังเงียบๆ ไม่บังจอ
+      const coldStart = !appMounted;
+      if (coldStart) loader.classList.remove('hidden');
       try {
-        loader.classList.remove('hidden');
-        // โหลดข้อมูลจาก Firestore
         await Store.fetchUserFromCloud(
-          firebaseUser.uid, 
-          firebaseUser.email, 
+          firebaseUser.uid,
+          firebaseUser.email,
           firebaseUser.displayName
         );
-        document.getElementById('onboarding').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        
-        lastRenderedView = null;
-        const user = Store.getActiveUser();
-        renderNav(user);
-        renderProfileChip(user);
-        renderDrawerProfile(user);
-        render();
+        showUser(Store.getActiveUser());
       } catch (error) {
         console.error("Error fetching user on state change:", error);
         showToast("โหลดข้อมูลล้มเหลว กำลังรันแบบออฟไลน์");
       } finally {
-        loader.classList.add('hidden');
+        if (coldStart) loader.classList.add('hidden');
       }
     } else {
       loader.classList.add('hidden');
       const activeUser = Store.getActiveUser();
       if (activeUser) {
-        document.getElementById('onboarding').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
-        lastRenderedView = null;
-        renderNav(activeUser);
-        renderProfileChip(activeUser);
-        renderDrawerProfile(activeUser);
-        render();
+        showUser(activeUser);
       } else {
         document.getElementById('onboarding').classList.remove('hidden');
         document.getElementById('app').classList.add('hidden');
+        appMounted = false;
         renderOnboardingSwitch();
       }
     }
