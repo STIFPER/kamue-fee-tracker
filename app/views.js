@@ -1,5 +1,7 @@
 // ===== View render functions =====
 
+const CHEVRON_ICON = '<svg class="disclosure-chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
 function getTierIcon(tierKey) {
   const icons = {
     bronze: '<svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/></svg>', // 4-point spark/star
@@ -74,13 +76,22 @@ function renderDashboard(root, user) {
 
       <div class="dash-side">
         <div class="section-label">7 วันล่าสุด</div>
-        <div class="card">
-          ${recentDays.map(d => `
-            <div class="ledger-item">
-              <div class="ledger-name">${THAI_DAYS_SHORT[d.date.getDay()]} ${d.date.getDate()} ${THAI_MONTHS[d.date.getMonth()]}${d.dateStr === todayStr ? ' · วันนี้' : ''}</div>
-              <div class="ledger-sub">${d.count > 0 ? fmtMoney(d.total) : '—'}</div>
-            </div>`).join('')}
-        </div>
+        <details class="disclosure">
+          <summary class="card disclosure-summary-row">
+            <div class="ledger-item" style="border:none;padding:0;flex:1">
+              <div class="ledger-name">${THAI_DAYS_SHORT[recentDays[0].date.getDay()]} ${recentDays[0].date.getDate()} ${THAI_MONTHS[recentDays[0].date.getMonth()]}${recentDays[0].dateStr === todayStr ? ' · วันนี้' : ''}</div>
+              <div class="ledger-sub">${recentDays[0].count > 0 ? fmtMoney(recentDays[0].total) : '—'}</div>
+            </div>
+            ${CHEVRON_ICON}
+          </summary>
+          <div class="card disclosure-body">
+            ${recentDays.slice(1).map(d => `
+              <div class="ledger-item">
+                <div class="ledger-name">${THAI_DAYS_SHORT[d.date.getDay()]} ${d.date.getDate()} ${THAI_MONTHS[d.date.getMonth()]}${d.dateStr === todayStr ? ' · วันนี้' : ''}</div>
+                <div class="ledger-sub">${d.count > 0 ? fmtMoney(d.total) : '—'}</div>
+              </div>`).join('')}
+          </div>
+        </details>
       </div>
     </div>
   `;
@@ -295,24 +306,29 @@ function renderHistory(root, user) {
     </div>
 
     <div class="calendar-container">
-      <div class="section-label">สรุปรายสัปดาห์</div>
-      <div class="weekly-summary-list">
-        ${weeks.map((w, idx) => {
-          const pct = historyMonthTotal > 0 ? (w.total / historyMonthTotal) * 100 : 0;
-          return `
-            <div class="weekly-summary-item">
-              <div class="weekly-badge w${idx + 1}">W${idx + 1}</div>
-              <div class="weekly-info">
-                <div class="weekly-title">${w.label}</div>
-                <div class="weekly-progress-track">
-                  <div class="weekly-progress-fill" style="width:${pct}%"></div>
+      <details class="disclosure">
+        <summary class="card disclosure-summary-row">
+          <div class="section-label" style="margin:0;flex:1">สรุปรายสัปดาห์</div>
+          ${CHEVRON_ICON}
+        </summary>
+        <div class="weekly-summary-list disclosure-body">
+          ${weeks.map((w, idx) => {
+            const pct = historyMonthTotal > 0 ? (w.total / historyMonthTotal) * 100 : 0;
+            return `
+              <div class="weekly-summary-item">
+                <div class="weekly-badge w${idx + 1}">W${idx + 1}</div>
+                <div class="weekly-info">
+                  <div class="weekly-title">${w.label}</div>
+                  <div class="weekly-progress-track">
+                    <div class="weekly-progress-fill" style="width:${pct}%"></div>
+                  </div>
                 </div>
+                <div class="weekly-amount">${fmtMoney(w.total)}</div>
               </div>
-              <div class="weekly-amount">${fmtMoney(w.total)}</div>
-            </div>
-          `;
-        }).join('')}
-      </div>
+            `;
+          }).join('')}
+        </div>
+      </details>
 
       <div class="section-label">${thaiDateLabel(parseDateStr(selected))}</div>
       <div class="day-detail-list">

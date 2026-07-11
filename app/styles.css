@@ -558,6 +558,23 @@ button { cursor: pointer; }
 
 .section-label { font-size: 11px; letter-spacing: .02em; text-transform: uppercase; color: var(--c-accent); margin: 20px 0 10px; }
 
+/* ===== Disclosure (collapsible sections) ===== */
+.disclosure summary { cursor: pointer; list-style: none; }
+.disclosure summary::-webkit-details-marker { display: none; }
+.disclosure summary::marker { content: ""; }
+.disclosure-summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.disclosure-chevron {
+  width: 18px; height: 18px; flex-shrink: 0; color: var(--c-brown);
+  transition: transform var(--dur-base) var(--ease-standard);
+}
+.disclosure[open] > summary .disclosure-chevron { transform: rotate(180deg); }
+.disclosure-summary-row.card {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+}
+.disclosure-body { margin-top: 8px; }
+
 /* ===== Entry view ===== */
 .entry-layout { display: flex; flex-direction: column; gap: 18px; }
 @media (min-width: 900px) {
