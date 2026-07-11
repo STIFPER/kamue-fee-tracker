@@ -55,6 +55,9 @@ body {
   min-height: 100vh;
 }
 h1, h2, h3 { font-family: var(--font-heading-en), var(--font-th); color: var(--c-dark); margin: 0; font-weight: 600; }
+/* Sukhumvit Set (ฟอนต์ระบบ Thai บน iOS/macOS) ไม่มีสัญลักษณ์ ฿ ทำให้เบราว์เซอร์ fallback ไปฟอนต์อื่นที่ตัวใหญ่ไม่เข้าชุด
+   จึงล็อกฟอนต์ของสัญลักษณ์นี้ไว้กับ Noto Sans Thai ที่มีสัดส่วนถูกต้องเสมอ ไม่ว่าข้อความรอบข้างจะใช้ฟอนต์อะไร */
+.baht { font-family: 'Noto Sans Thai', sans-serif; }
 button, input, select, textarea { font-family: inherit; }
 button { cursor: pointer; }
 .hidden { display: none !important; }

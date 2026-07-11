@@ -1,5 +1,5 @@
 // Service Worker: cache-first สำหรับ app shell เพื่อให้เปิดใช้งานได้แม้ไม่มีเน็ต (features.md > Offline Support)
-const CACHE_NAME = 'kamue-app-v17';
+const CACHE_NAME = 'kamue-app-v18';
 const SHELL = [
   './',
   './index.html',

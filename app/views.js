@@ -131,7 +131,7 @@ function renderEntry(root, user) {
             const qty = e ? e.quantity : 0, mins = e ? e.minutes : 0;
             const has = p.isHourly ? mins > 0 : qty > 0;
             const countLabel = p.isHourly ? (mins + '′') : String(qty);
-            const feeLabel = p.isHourly ? `฿${p.fee} · ต่อชั่วโมง` : `฿${p.fee} · ${p.unit}`;
+            const feeLabel = p.isHourly ? `<span class="baht">฿</span>${p.fee} · ต่อชั่วโมง` : `<span class="baht">฿</span>${p.fee} · ${p.unit}`;
             return `
               <div class="proc-row">
                 <div class="proc-info">
@@ -156,7 +156,7 @@ function renderEntry(root, user) {
           </div>
           ${!hasItems ? '<div class="ledger-empty">ยังไม่มีรายการ<br>เลือกหัตถการที่ทำวันนี้เพื่อเริ่มบันทึก</div>' : log.entries.map(e => {
             const p = procIndex[e.procId]; if (!p) return '';
-            const detail = p.isHourly ? `${Math.round(e.minutes)} นาที · ฿${e.feeSnapshot}/ชม` : `${e.quantity} × ฿${e.feeSnapshot}`;
+            const detail = p.isHourly ? `${Math.round(e.minutes)} นาที · <span class="baht">฿</span>${e.feeSnapshot}/ชม` : `${e.quantity} × <span class="baht">฿</span>${e.feeSnapshot}`;
             return `
               <div class="ledger-item">
                 <div style="min-width:0;flex:1">
@@ -318,7 +318,7 @@ function renderHistory(root, user) {
       <div class="day-detail-list">
         ${selectedLog.entries.length === 0 ? '<div class="ledger-empty">ไม่มีรายการในวันนี้</div>' : selectedLog.entries.map(e => {
           const p = procIndex[e.procId]; if (!p) return '';
-          const detail = p.isHourly ? `${Math.round(e.minutes)} นาที · ฿${e.feeSnapshot}/ชม` : `${e.quantity} × ฿${e.feeSnapshot}`;
+          const detail = p.isHourly ? `${Math.round(e.minutes)} นาที · <span class="baht">฿</span>${e.feeSnapshot}/ชม` : `${e.quantity} × <span class="baht">฿</span>${e.feeSnapshot}`;
           return `
             <div class="day-detail-item">
               <div style="min-width:0;flex:1">
@@ -406,7 +406,7 @@ function renderReports(root, user) {
     for (const e of log.entries) { const p = procIndex[e.procId]; if (p && !p.isHourly) usedProcFees[p.id] = p; }
   }
   const topFeeProc = Object.values(usedProcFees).sort((a, b) => b.fee - a.fee)[0];
-  if (topFeeProc) insights.push(`ถ้าอยากได้ค่ามือเพิ่มไว ลองรับเคส “${topFeeProc.name}” เพิ่ม (฿${topFeeProc.fee} · ${topFeeProc.unit})`);
+  if (topFeeProc) insights.push(`ถ้าอยากได้ค่ามือเพิ่มไว ลองรับเคส “${topFeeProc.name}” เพิ่ม (<span class="baht">฿</span>${topFeeProc.fee} · ${topFeeProc.unit})`);
 
   root.innerHTML = `
     <div class="month-nav" style="margin-bottom:24px">
@@ -433,7 +433,7 @@ function renderReports(root, user) {
         <div class="chart-y-axis">
           <span>${fmtMoney(maxWeeklyTotal)}</span>
           <span>${fmtMoney(maxWeeklyTotal / 2)}</span>
-          <span>฿0</span>
+          <span><span class="baht">฿</span>0</span>
         </div>
         <div class="chart-bars">
           ${weeks.map((w, i) => {

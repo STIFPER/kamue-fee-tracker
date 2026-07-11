@@ -4,8 +4,14 @@ const THAI_MONTHS = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.
 const THAI_DAYS = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const THAI_DAYS_SHORT = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
 
+function fmtNumber(n) {
+  return Math.round(n || 0).toLocaleString('en-US');
+}
+
+// ฿ ห่อด้วย <span class="baht"> เพราะฟอนต์ระบบบางตัว (เช่น Sukhumvit Set บน iOS) ไม่มีสัญลักษณ์นี้
+// ทำให้เบราว์เซอร์ fallback ไปฟอนต์อื่นที่ขนาด/สัดส่วนไม่เข้าชุดกับตัวเลข จึงต้องล็อกฟอนต์ของ ฿ ไว้ตายตัว
 function fmtMoney(n) {
-  return '฿' + Math.round(n || 0).toLocaleString('en-US');
+  return '<span class="baht">฿</span>' + fmtNumber(n);
 }
 
 function toDateStr(d) {

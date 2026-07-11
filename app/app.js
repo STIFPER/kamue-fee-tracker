@@ -69,19 +69,19 @@ const NumberAnim = { prev: {} };
 function moneySpan(key, value) {
   const from = key in NumberAnim.prev ? NumberAnim.prev[key] : value;
   NumberAnim.prev[key] = value;
-  return `<span data-anim-key="${escapeHtml(key)}" data-anim-to="${value}">${fmtMoney(from)}</span>`;
+  return `<span class="baht">฿</span><span data-anim-key="${escapeHtml(key)}" data-anim-to="${value}">${fmtNumber(from)}</span>`;
 }
 function runNumberAnimations(root) {
   root.querySelectorAll('[data-anim-key]').forEach(el => {
     const to = parseFloat(el.getAttribute('data-anim-to'));
     const from = parseFloat(el.textContent.replace(/[^0-9.-]/g, '')) || 0;
-    if (from === to) { el.textContent = fmtMoney(to); return; }
+    if (from === to) { el.textContent = fmtNumber(to); return; }
     const start = performance.now();
     const duration = 450;
     (function tick(now) {
       const t = Math.min(1, (now - start) / duration);
       const eased = 1 - Math.pow(1 - t, 3);
-      el.textContent = fmtMoney(from + (to - from) * eased);
+      el.textContent = fmtNumber(from + (to - from) * eased);
       if (t < 1) requestAnimationFrame(tick);
     })(start);
   });
