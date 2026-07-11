@@ -15,7 +15,7 @@ const NAV_ITEMS = [
   { key: 'entry', label: 'บันทึกงาน', primary: true },
   { key: 'history', label: 'ปฏิทิน', primary: true },
   { key: 'reports', label: 'รายงาน', primary: true },
-  { key: 'team', label: 'ทีม', roles: ['admin', 'super_admin'] },
+  { key: 'team', label: 'ทีม', roles: ['super_admin'] },
   { key: 'settings', label: 'ตั้งค่า' },
 ];
 
@@ -113,7 +113,7 @@ function renderOnboardingSwitch() {
   box.innerHTML = '<div class="section-label" style="text-align:left;font-size:11.5px;letter-spacing:0.04em;text-transform:uppercase;color:var(--c-brown);margin-top:24px;margin-bottom:8px;font-weight:600;">Recent Logins</div>' +
     users.map(u => `
       <div class="profile-pick-item">
-        <span>${escapeHtml(u.displayName)} <span class="role-badge">${roleLabel(u.role)}</span></span>
+        <span>${escapeHtml(u.displayName)} ${roleBadgeHtml(u.role)}</span>
         <button data-switch="${u.id}">เข้าใช้งาน</button>
       </div>`).join('');
   box.querySelectorAll('[data-switch]').forEach(btn => {
@@ -127,6 +127,13 @@ function renderOnboardingSwitch() {
 
 function roleLabel(role) {
   return { assistant: 'Assistant', admin: 'Admin', super_admin: 'Super Admin' }[role] || role;
+}
+
+const VERIFIED_ICON = '<svg viewBox="0 0 24 24" fill="none" style="width:12px;height:12px;margin-right:3px;vertical-align:-1.5px"><path d="M9 12.3l2.1 2.1 4.2-4.6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9.3" stroke="currentColor" stroke-width="1.7"/></svg>';
+
+function roleBadgeHtml(role) {
+  const isVerified = role === 'super_admin';
+  return `<span class="role-badge${isVerified ? ' role-badge-verified' : ''}">${isVerified ? VERIFIED_ICON : ''}${roleLabel(role)}</span>`;
 }
 
 function escapeHtml(s) {
@@ -196,7 +203,7 @@ function renderProfileChip(user) {
 
 function renderDrawerProfile(user) {
   const box = document.getElementById('drawer-profile');
-  box.innerHTML = `<div class="drawer-profile-name">${escapeHtml(user.displayName)}</div><div class="drawer-profile-role"><span class="role-badge">${roleLabel(user.role)}</span></div>`;
+  box.innerHTML = `<div class="drawer-profile-name">${escapeHtml(user.displayName)}</div><div class="drawer-profile-role">${roleBadgeHtml(user.role)}</div>`;
 }
 
 function render() {

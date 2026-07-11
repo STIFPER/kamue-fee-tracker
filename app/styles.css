@@ -9,8 +9,8 @@
   --c-white: #F8F6F3;     /* พื้นผิวการ์ด (ห้ามใช้ขาวสนิท) */
 
   --font-th: 'Noto Sans Thai', sans-serif;
-  --font-heading-en: 'Noto Sans Thai', sans-serif;
-  --font-body-en: 'Noto Sans Thai', sans-serif;
+  --font-heading-en: 'Inter', sans-serif;
+  --font-body-en: 'Inter', sans-serif;
 
   --radius-lg: 28px;
   --radius-md: 18px;
@@ -249,26 +249,49 @@ button { cursor: pointer; }
 @media (min-width: 860px) { .hamburger-btn { display: none; } }
 .topbar-brand {
   display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.topbar-logo {
+  width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0;
+  background: var(--glass-sheen-dark), var(--c-dark);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: var(--glass-rim-dark);
+}
+.topbar-logo svg { width: 16px; height: 16px; }
+.topbar-brand-text {
+  display: flex;
   flex-direction: column;
-  line-height: 1.15;
+  line-height: 1.1;
+  min-width: 0;
 }
 .topbar-brand-main {
   font-family: var(--font-th);
-  font-size: 21px;
-  font-weight: 800;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--c-dark);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 .topbar-brand-sub {
-  font-family: var(--font-th);
-  font-size: 7.5px;
-  font-weight: 700;
-  color: var(--c-accent);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  display: none;
+  font-family: var(--font-body-en), var(--font-th);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--c-brown);
+  opacity: 0.72;
+  letter-spacing: 0;
   margin-top: 1px;
-  max-width: 180px;
-  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+@media (min-width: 860px) {
+  .topbar-brand-sub { display: block; }
+}
+@media (min-width: 1100px) {
+  .topbar-brand-sub { max-width: none; }
 }
 .topnav { display: none; gap: 4px; flex: 1; }
 .topnav button {
@@ -325,7 +348,7 @@ button { cursor: pointer; }
 
 /* ===== FAB ===== */
 .fab {
-  position: fixed; right: 18px; bottom: 92px; width: 56px; height: 56px; border-radius: 50%;
+  position: fixed; right: 18px; bottom: calc(76px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%;
   background: var(--glass-sheen-dark), var(--c-dark);
   color: var(--c-white); border: 1px solid rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow-lift), 0 0 0 6px rgba(184, 156, 130, .22), var(--glass-rim-dark); z-index: 19;
@@ -416,7 +439,7 @@ button { cursor: pointer; }
       inset 0 15px 30px -5px rgba(255, 255, 255, 0.15);
   }
 }
-.kicker { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--c-brown); }
+.kicker { font-size: 10.5px; letter-spacing: .02em; text-transform: uppercase; color: var(--c-brown); }
 .card-dark .kicker { color: var(--c-secondary); }
 
 /* ===== Dashboard ===== */
@@ -435,7 +458,6 @@ button { cursor: pointer; }
 }
 .tier-head { display: flex; justify-content: space-between; align-items: flex-start; }
 .tier-name { font-family: var(--font-heading-en), var(--font-th); font-weight: 700; font-size: 22px; color: var(--c-dark); margin-top: 3px; line-height: 1.1; }
-.tier-name .en { color: var(--c-accent); font-size: 14px; font-weight: 500; }
 .tier-badge {
   width: 44px; height: 44px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -531,7 +553,7 @@ button { cursor: pointer; }
 .stat-seg .value { font-family: var(--font-heading-en); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 24px; color: var(--c-dark); margin-top: 4px; }
 .stat-seg .sub { font-size: 11.5px; color: var(--c-accent); margin-top: 2px; }
 
-.section-label { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--c-accent); margin: 20px 0 10px; }
+.section-label { font-size: 11px; letter-spacing: .02em; text-transform: uppercase; color: var(--c-accent); margin: 20px 0 10px; }
 
 /* ===== Entry view ===== */
 .entry-layout { display: flex; flex-direction: column; gap: 18px; }
@@ -1034,7 +1056,8 @@ button { cursor: pointer; }
 .settings-row:last-child { border-bottom: none; }
 .settings-row .label { font-size: 13.5px; color: var(--c-brown); }
 .fee-input { width: 84px; padding: 8px 10px; border: 1px solid var(--c-secondary); border-radius: 10px; text-align: right; background: var(--c-primary); font-size: 13.5px; }
-.role-badge { display: inline-block; font-size: 11px; padding: 3px 10px; border-radius: 99px; background: var(--c-secondary); color: var(--c-dark); font-weight: 600; }
+.role-badge { display: inline-flex; align-items: center; font-size: 11px; padding: 3px 10px; border-radius: 99px; background: var(--c-secondary); color: var(--c-dark); font-weight: 600; }
+.role-badge-verified { background: var(--c-dark); color: var(--c-white); }
 
 .grid-2 { display: grid; grid-template-columns: 1fr; gap: 24px; }
 @media (min-width: 750px) { .grid-2 { grid-template-columns: 1fr 1fr; } }

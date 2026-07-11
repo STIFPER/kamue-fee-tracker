@@ -38,7 +38,7 @@ function renderDashboard(root, user) {
   const todayCount = todayLog ? todayLog.entries.length : 0;
 
   const { tier, next, progressPct } = currentTier(monthTotal, TIERS);
-  const remainLabel = next ? `อีก ${fmtMoney(next.min - monthTotal)} ถึง ${next.th}` : 'ระดับสูงสุด';
+  const remainLabel = next ? `อีก ${fmtMoney(next.min - monthTotal)} ถึง ${next.en}` : 'ระดับสูงสุด';
 
   const recentDays = dailySeries(logs, addDays(today, -6), today).reverse();
 
@@ -49,15 +49,15 @@ function renderDashboard(root, user) {
           <div class="hero-tier">
             <div class="tier-head">
               <div>
-                <div class="kicker">ระดับเดือนนี้ · Tier</div>
-                <div class="tier-name">${tier.th} <span class="en">· ${tier.en}</span></div>
+                <div class="kicker">This Month's Tier</div>
+                <div class="tier-name">${tier.en}</div>
               </div>
             </div>
             <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%"></div></div>
             <div class="progress-meta"><span>${progressPct}% · ${moneySpan('dash-tier-month', monthTotal)} สะสม</span><span>${remainLabel}</span></div>
           </div>
           <div class="hero-today card-dark">
-            <div class="kicker">รายได้วันนี้ · Today</div>
+            <div class="kicker">รายได้วันนี้</div>
             <div class="today-amount">${moneySpan('dash-today', todayTotal)}</div>
             <div class="kicker" style="margin-top:3px">${todayCount > 0 ? todayCount + ' หัตถการวันนี้' : 'ยังไม่มีรายการ'}</div>
           </div>
@@ -114,13 +114,13 @@ function renderEntry(root, user) {
       <input type="date" class="date-input" id="date-picker" value="${UI.entryDate}">
       <button class="btn btn-ghost btn-sm" id="btn-next-day">›</button>
       <button class="btn btn-secondary btn-sm" id="btn-today">วันนี้</button>
-      ${canDuplicate ? '<button class="btn btn-ghost btn-sm" id="btn-duplicate">Duplicate Yesterday</button>' : ''}
+      ${canDuplicate ? '<button class="btn btn-ghost btn-sm" id="btn-duplicate">ทำซ้ำเมื่อวาน</button>' : ''}
     </div>
     <div style="font-size:13px;color:var(--c-brown);margin-bottom:10px">${thaiDateLabel(dateObj)}</div>
 
     <div class="entry-layout">
       <section>
-        <input class="search-field" id="search-proc" placeholder="ค้นหาหัตถการ · Search treatment" value="${escapeHtml(UI.entryQuery)}">
+        <input class="search-field" id="search-proc" placeholder="ค้นหาหัตถการ" value="${escapeHtml(UI.entryQuery)}">
         <div class="cat-tabs">
           ${CATEGORIES.map(c => `<button class="pill${(!q && c.key === UI.entryCat) ? ' active' : ''}" data-cat="${c.key}">${c.th}</button>`).join('')}
         </div>
@@ -171,10 +171,10 @@ function renderEntry(root, user) {
               </div>`;
           }).join('')}
           <div class="ledger-total-row">
-            <span style="font-size:13px;color:var(--c-brown)">รวมวันนี้ · Total</span>
+            <span style="font-size:13px;color:var(--c-brown)">รวมวันนี้</span>
             <span class="amount">${moneySpan('entry-total', dailyTotal)}</span>
           </div>
-          <button class="btn btn-primary btn-block" id="btn-save-day" style="margin-top:14px" ${!hasItems ? 'disabled' : ''}>บันทึกวันนี้ · Save day</button>
+          <button class="btn btn-primary btn-block" id="btn-save-day" style="margin-top:14px" ${!hasItems ? 'disabled' : ''}>บันทึกวันนี้</button>
         </div>
       </aside>
     </div>
@@ -234,7 +234,7 @@ function renderEntry(root, user) {
     rerender();
   });
   const saveBtn = document.getElementById('btn-save-day');
-  if (hasItems) saveBtn.addEventListener('click', () => { showToast('✓ บันทึกแล้ว · Saved'); navigate('dashboard'); });
+  if (hasItems) saveBtn.addEventListener('click', () => { showToast('✓ บันทึกแล้ว'); navigate('dashboard'); });
 }
 
 function roundQty(n) { return Math.round(n * 100) / 100; }
@@ -295,7 +295,7 @@ function renderHistory(root, user) {
     </div>
 
     <div class="calendar-container">
-      <div class="section-label">สรุปรายสัปดาห์ · Weekly Summary</div>
+      <div class="section-label">สรุปรายสัปดาห์</div>
       <div class="weekly-summary-list">
         ${weeks.map((w, idx) => {
           const pct = historyMonthTotal > 0 ? (w.total / historyMonthTotal) * 100 : 0;
@@ -332,7 +332,7 @@ function renderHistory(root, user) {
             </div>`;
         }).join('')}
         <div class="day-detail-total">
-          <span style="font-size:13.5px;color:var(--c-brown)">รวมวันนี้ · Daily Total</span>
+          <span style="font-size:13.5px;color:var(--c-brown)">รวมวันนี้</span>
           <span class="amount">${fmtMoney(selectedTotal)}</span>
         </div>
         <button class="btn btn-secondary btn-block" id="btn-edit-day" style="margin-top:16px">แก้ไขในหน้าบันทึกงาน</button>
@@ -417,18 +417,18 @@ function renderReports(root, user) {
 
     <div class="stat-row">
       <div class="card stat-card">
-        <div class="kicker">ยอดรวมเดือนนี้ · Total Revenue</div>
+        <div class="kicker">ยอดรวมเดือนนี้</div>
         <div class="value">${moneySpan('reports-total', monthTotal)}</div>
       </div>
       <div class="card stat-card">
-        <div class="kicker">เฉลี่ย/วันที่ทำงาน · Active Average</div>
+        <div class="kicker">เฉลี่ย/วันที่ทำงาน</div>
         <div class="value">${moneySpan('reports-avg', avgPerActiveDay)}</div>
         <div class="sub">${activeDays} วันที่บันทึกเคส</div>
       </div>
     </div>
 
     <div class="card chart-card">
-      <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);font-weight:700">รายได้รายสัปดาห์ · Weekly Chart</div>
+      <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);font-weight:700">รายได้รายสัปดาห์</div>
       <div class="chart-container">
         <div class="chart-y-axis">
           <span>${fmtMoney(maxWeeklyTotal)}</span>
@@ -456,7 +456,7 @@ function renderReports(root, user) {
 
     <div class="grid-2">
       <div class="card">
-        <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สัดส่วนตามหมวด · Categories</div>
+        <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สัดส่วนตามหมวด</div>
         ${catList.map(c => {
           const barPct = Math.round(c.total / maxCat * 100);
           const pctOfTotal = monthTotal > 0 ? Math.round(c.total / monthTotal * 100) : 0;
@@ -479,7 +479,7 @@ function renderReports(root, user) {
       </div>
 
       <div class="card">
-        <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สรุปรายสัปดาห์ · Weekly Breakdown</div>
+        <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สรุปรายสัปดาห์</div>
         <div class="weekly-list">
           ${weeks.map((w, i) => {
             const weekPct = monthTotal > 0 ? Math.round(w.total / monthTotal * 100) : 0;
@@ -501,17 +501,17 @@ function renderReports(root, user) {
       </div>
     </div>
 
-    <div class="section-label" style="margin-top:28px">ข้อสังเกต · Insights</div>
+    <div class="section-label" style="margin-top:28px">ข้อสังเกต</div>
     <div class="insight-list">
       ${insights.length === 0 
         ? '<div class="insight-item">ยังไม่มีข้อมูลเพียงพอสำหรับการสรุปวิเคราะห์รายเดือน</div>' 
         : insights.map(i => `<div class="insight-item">${i}</div>`).join('')}
     </div>
 
-    <div class="section-label" style="margin-top:28px">ส่งออกรายงาน · Export</div>
+    <div class="section-label" style="margin-top:28px">ส่งออกรายงาน</div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
-      <button class="btn btn-secondary" id="btn-export-csv">Export CSV</button>
-      <button class="btn btn-ghost" id="btn-print">Print / Save as PDF</button>
+      <button class="btn btn-secondary" id="btn-export-csv">ส่งออก CSV</button>
+      <button class="btn btn-ghost" id="btn-print">พิมพ์ / บันทึกเป็น PDF</button>
     </div>
   `;
 
@@ -567,7 +567,7 @@ function renderTeam(root, user) {
     ${rows.map(r => `
       <div class="card" style="margin-bottom:10px">
         <div class="ledger-item" style="border:none;padding:0">
-          <div class="ledger-name">${escapeHtml(r.displayName)} <span class="role-badge">${roleLabel(r.role)}</span></div>
+          <div class="ledger-name">${escapeHtml(r.displayName)} ${roleBadgeHtml(r.role)}</div>
           <div class="ledger-sub">${fmtMoney(r.monthTotal)}</div>
         </div>
         <div style="font-size:12px;color:var(--c-brown);margin-top:4px">${r.entryCount} รายการสะสมทั้งหมด</div>
@@ -585,7 +585,7 @@ function renderSettings(root, user) {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div>
           <div style="font-family:var(--font-heading-en);font-size:20px;color:var(--c-dark)">${escapeHtml(user.displayName)}</div>
-          <span class="role-badge">${roleLabel(user.role)}</span>
+          ${roleBadgeHtml(user.role)}
         </div>
       </div>
       ${Store.isFirebase ? `
