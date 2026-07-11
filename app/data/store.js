@@ -1,8 +1,31 @@
-// ชั้นเก็บข้อมูล (Repository layer) — เก็บลง localStorage ของเครื่อง
-// โครงสร้าง key/table ตั้งใจให้ตรงกับ database.md เพื่อย้ายไป Supabase ได้ตรง ๆ ในอนาคต
-// users / user_procedures / daily_logs+log_entries / user_settings
+// ชั้นเก็บข้อมูล (Repository layer) — รองรับการทำงานแบบ Hybrid (Firestore + LocalStorage)
+// หากใส่ Firebase Config จะใช้ระบบคลาวด์และ Google Login จริง หากไม่ใส่จะถอยกลับไปใช้ Local Storage เหมือนเดิม
 
 const DB_KEY = 'soo_ma_v1';
+let db = null;
+let auth = null;
+
+// ตรวจสอบว่าเปิดใช้งาน Firebase หรือไม่
+const isFirebaseEnabled = 
+  typeof firebase !== 'undefined' && 
+  typeof FIREBASE_CONFIG !== 'undefined' && 
+  FIREBASE_CONFIG.apiKey && 
+  FIREBASE_CONFIG.apiKey.trim() !== '';
+
+if (isFirebaseEnabled) {
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
+    db = firebase.firestore();
+    auth = firebase.auth();
+    console.log("Firebase initialized successfully! Running in Cloud Firestore mode.");
+  } catch (e) {
+    console.error("Firebase initialization failed, falling back to LocalStorage:", e);
+  }
+} else {
+  console.log("No Firebase Config found. Running in local-only demo mode (LocalStorage).");
+}
 
 function uid() {
   if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -13,25 +36,97 @@ function loadDB() {
   try {
     const raw = localStorage.getItem(DB_KEY);
     if (raw) return JSON.parse(raw);
-  } catch (e) { /* corrupt data — start fresh */ }
+  } catch (e) { /* ข้อมูลเสียหาย เริ่มสร้างใหม่ */ }
   return { users: {}, activeUserId: null };
 }
 
-function saveDB(db) {
-  localStorage.setItem(DB_KEY, JSON.stringify(db));
+function saveDB(dbData) {
+  localStorage.setItem(DB_KEY, JSON.stringify(dbData));
 }
 
 const Store = {
   _db: loadDB(),
+  isFirebase: !!(db && auth),
 
-  _persist() { saveDB(this._db); },
+  _persist() { 
+    saveDB(this._db); 
+  },
 
   getActiveUser() {
     const id = this._db.activeUserId;
     return id ? this._db.users[id] : null;
   },
 
-  // เข้าสู่ระบบครั้งแรก = สร้างบัญชีอัตโนมัติ Role: Assistant (ตรงกับ project.md > เมื่อ Login ครั้งแรก)
+  // ดึงข้อมูลผู้ใช้จาก Firestore มาใส่ Cache
+  async fetchUserFromCloud(userId, email, displayName) {
+    if (!this.isFirebase) return this.getActiveUser();
+
+    try {
+      const userRef = db.collection('users').doc(userId);
+      const userSnap = await userRef.get();
+
+      let userData;
+
+      if (!userSnap.exists) {
+        // ยังไม่มีบัญชีบน Firestore -> สร้างบัญชีใหม่เริ่มต้น (Role: assistant)
+        const now = new Date().toISOString();
+        userData = {
+          id: userId,
+          displayName: displayName || 'ผู้ใช้ Google',
+          email: email || null,
+          role: 'assistant',
+          createdAt: now,
+          updatedAt: now,
+          procedures: PROCEDURE_MASTER.map((p, i) => ({
+            id: uid(), masterId: p.id, categoryKey: p.cat, name: p.name,
+            unit: p.unit, fee: p.fee, isHourly: !!p.hourly, preciseQty: !!p.preciseQty, isCustom: false,
+            isActive: true, sort: i,
+          })),
+        };
+        
+        // เขียนข้อมูลหลักผู้ใช้
+        await userRef.set(userData);
+
+        // เขียนการตั้งค่าเริ่มต้น
+        const settingsData = { monthlyGoal: null, weekStart: 'mon', currency: 'THB' };
+        await userRef.collection('settings').doc('default').set(settingsData);
+        userData.settings = settingsData;
+        userData.logs = {};
+      } else {
+        // ดึงข้อมูลผู้ใช้ที่มีอยู่แล้ว
+        userData = userSnap.data();
+        
+        // ดึง Settings ของผู้ใช้
+        const settingsSnap = await userRef.collection('settings').doc('default').get();
+        userData.settings = settingsSnap.exists ? settingsSnap.data() : { monthlyGoal: null, weekStart: 'mon', currency: 'THB' };
+
+        // ดึง Logs ทั้งหมดของผู้ใช้
+        const logsSnap = await userRef.collection('logs').get();
+        userData.logs = {};
+        logsSnap.forEach(doc => {
+          userData.logs[doc.id] = doc.data();
+        });
+      }
+
+      // บันทึกลง Local Cache
+      this._db.users[userId] = userData;
+      this._db.activeUserId = userId;
+      this._persist();
+
+      return userData;
+    } catch (error) {
+      console.error("Error syncing user with Firestore:", error);
+      // หากเกิดข้อผิดพลาดในการโหลดจาก Cloud ให้พยายามใช้ cache เดิมในเครื่อง
+      if (this._db.users[userId]) {
+        this._db.activeUserId = userId;
+        this._persist();
+        return this._db.users[userId];
+      }
+      throw error;
+    }
+  },
+
+  // ใช้สร้างบัญชีผู้ใช้ในโหมด local demo (Mock)
   createUser(displayName, role) {
     const id = uid();
     const now = new Date().toISOString();
@@ -43,7 +138,7 @@ const Store = {
         unit: p.unit, fee: p.fee, isHourly: !!p.hourly, preciseQty: !!p.preciseQty, isCustom: false,
         isActive: true, sort: i,
       })),
-      logs: {},          // { 'YYYY-MM-DD': { entries: [...], note, updatedAt } }
+      logs: {},
       settings: { monthlyGoal: null, weekStart: 'mon', currency: 'THB' },
     };
     this._db.activeUserId = id;
@@ -53,13 +148,25 @@ const Store = {
 
   updateUser(patch) {
     const u = this.getActiveUser(); if (!u) return;
-    Object.assign(u, patch, { updatedAt: new Date().toISOString() });
+    const now = new Date().toISOString();
+    Object.assign(u, patch, { updatedAt: now });
     this._persist();
+
+    // เขียนลง Firestore ในเบื้องหลัง (Background sync)
+    if (this.isFirebase) {
+      db.collection('users').doc(u.id).update({
+        ...patch,
+        updatedAt: now
+      }).catch(err => console.error("Firestore error updating user:", err));
+    }
   },
 
   logout() {
     this._db.activeUserId = null;
     this._persist();
+    if (this.isFirebase) {
+      auth.signOut().catch(err => console.error("Sign out error:", err));
+    }
   },
 
   getProcedures() {
@@ -75,7 +182,18 @@ const Store = {
   updateProcedureFee(procId, fee) {
     const u = this.getActiveUser(); if (!u) return;
     const p = u.procedures.find(x => x.id === procId);
-    if (p) { p.fee = fee; this._persist(); }
+    if (p) { 
+      p.fee = fee; 
+      this._persist(); 
+
+      // ซิงค์การเปลี่ยน Rate หัตถการไปยัง Firestore
+      if (this.isFirebase) {
+        db.collection('users').doc(u.id).update({
+          procedures: u.procedures,
+          updatedAt: new Date().toISOString()
+        }).catch(err => console.error("Firestore error updating procedure fee:", err));
+      }
+    }
   },
 
   getLog(dateStr) {
@@ -88,8 +206,7 @@ const Store = {
     return u.logs;
   },
 
-  // บันทึกจำนวนของหัตถการหนึ่งตัวในวันที่กำหนด (0 = ลบรายการ)
-  // เก็บ fee_snapshot ตอนบันทึก เพื่อไม่ให้ยอดย้อนหลังเปลี่ยนถ้าแก้ค่ามือทีหลัง (calculations.md / database.md)
+  // บันทึกรายการหัตถการ (Optimistic UI - อัปเดตฝั่ง client ทันที และซิงค์เบื้องหลัง)
   setEntry(dateStr, procId, quantity, minutes) {
     const u = this.getActiveUser(); if (!u) return;
     const proc = u.procedures.find(p => p.id === procId);
@@ -98,6 +215,7 @@ const Store = {
     const log = u.logs[dateStr];
     const qty = quantity || 0, mins = minutes || 0;
     const idx = log.entries.findIndex(e => e.procId === procId);
+    
     if (qty <= 0 && mins <= 0) {
       if (idx >= 0) log.entries.splice(idx, 1);
     } else {
@@ -105,15 +223,41 @@ const Store = {
       const entry = { procId, quantity: qty, minutes: mins, feeSnapshot: proc.fee, subtotal };
       if (idx >= 0) log.entries[idx] = entry; else log.entries.push(entry);
     }
-    log.updatedAt = new Date().toISOString();
-    if (log.entries.length === 0) delete u.logs[dateStr];
+    
+    const now = new Date().toISOString();
+    log.updatedAt = now;
+    
+    const isLogEmpty = log.entries.length === 0;
+    if (isLogEmpty) {
+      delete u.logs[dateStr];
+    }
+    
     this._persist();
+
+    // ซิงค์ประวัติรายวันไปยัง Firestore ในเบื้องหลัง
+    if (this.isFirebase) {
+      const logRef = db.collection('users').doc(u.id).collection('logs').doc(dateStr);
+      if (isLogEmpty) {
+        logRef.delete().catch(err => console.error("Firestore error deleting log:", err));
+      } else {
+        logRef.set({
+          entries: log.entries,
+          note: log.note || '',
+          updatedAt: now
+        }).catch(err => console.error("Firestore error writing log:", err));
+      }
+    }
   },
 
   clearDay(dateStr) {
     const u = this.getActiveUser(); if (!u) return;
     delete u.logs[dateStr];
     this._persist();
+
+    if (this.isFirebase) {
+      db.collection('users').doc(u.id).collection('logs').doc(dateStr).delete()
+        .catch(err => console.error("Firestore error clearing day log:", err));
+    }
   },
 
   getSettings() {
@@ -125,5 +269,11 @@ const Store = {
     const u = this.getActiveUser(); if (!u) return;
     Object.assign(u.settings, patch);
     this._persist();
+
+    // ซิงค์การตั้งค่าไปยัง Firestore
+    if (this.isFirebase) {
+      db.collection('users').doc(u.id).collection('settings').doc('default').set(u.settings)
+        .catch(err => console.error("Firestore error saving settings:", err));
+    }
   },
 };

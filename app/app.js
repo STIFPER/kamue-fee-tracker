@@ -88,6 +88,10 @@ function runNumberAnimations(root) {
 }
 
 function boot() {
+  if (Store.isFirebase) {
+    // โหมด Firebase: การรันเว็บจะทำงานผ่าน onAuthStateChanged ด้านล่างโดยอัตโนมัติ
+    return;
+  }
   const user = Store.getActiveUser();
   const onboarding = document.getElementById('onboarding');
   const app = document.getElementById('app');
@@ -219,7 +223,18 @@ document.getElementById('btn-fab').addEventListener('click', () => { UI.entryDat
 
 // ===== Onboarding wiring =====
 document.getElementById('btn-google-login').addEventListener('click', () => {
-  openOverlay(document.getElementById('name-modal'));
+  if (Store.isFirebase) {
+    const loader = document.getElementById('loader');
+    loader.classList.remove('hidden');
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(err => {
+      console.error("Google Auth error:", err);
+      showToast("ล็อกอินล้มเหลว: " + err.message);
+      loader.classList.add('hidden');
+    });
+  } else {
+    openOverlay(document.getElementById('name-modal'));
+  }
 });
 document.getElementById('btn-cancel-name').addEventListener('click', () => {
   closeOverlay(document.getElementById('name-modal'));
@@ -236,6 +251,45 @@ document.getElementById('btn-confirm-name').addEventListener('click', () => {
 });
 
 boot();
+
+// การผูก Auth Event Listener ของ Firebase (ทำงานเฉพาะเมื่อใส่ Config)
+if (Store.isFirebase) {
+  const loader = document.getElementById('loader');
+  loader.classList.remove('hidden');
+
+  auth.onAuthStateChanged(async (firebaseUser) => {
+    if (firebaseUser) {
+      try {
+        loader.classList.remove('hidden');
+        // โหลดข้อมูลจาก Firestore
+        await Store.fetchUserFromCloud(
+          firebaseUser.uid, 
+          firebaseUser.email, 
+          firebaseUser.displayName
+        );
+        document.getElementById('onboarding').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+        
+        lastRenderedView = null;
+        const user = Store.getActiveUser();
+        renderNav(user);
+        renderProfileChip(user);
+        renderDrawerProfile(user);
+        render();
+      } catch (error) {
+        console.error("Error fetching user on state change:", error);
+        showToast("โหลดข้อมูลล้มเหลว กำลังรันแบบออฟไลน์");
+      } finally {
+        loader.classList.add('hidden');
+      }
+    } else {
+      loader.classList.add('hidden');
+      document.getElementById('onboarding').classList.remove('hidden');
+      document.getElementById('app').classList.add('hidden');
+      renderOnboardingSwitch();
+    }
+  });
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

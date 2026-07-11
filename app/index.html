@@ -80,6 +80,19 @@
 
 <div id="toast" class="toast"></div>
 
+<!-- Loading overlay -->
+<div id="loader" class="modal-backdrop hidden loader-container" style="background:rgba(58,44,40,0.85);z-index:9999;color:#F5EBE6;font-size:15px;font-weight:500;">
+  <div class="loader-spinner"></div>
+  <span>กำลังโหลดข้อมูล...</span>
+</div>
+
+<!-- Firebase SDK (Compat Version) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+<!-- App configurations and scripts -->
+<script src="data/config.js"></script>
 <script src="data/catalog.js"></script>
 <script src="data/store.js"></script>
 <script src="data/calc.js"></script>
