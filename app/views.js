@@ -152,7 +152,7 @@ function renderEntry(root, user) {
       <aside class="entry-aside">
         <div class="card">
           <div class="tier-head" style="margin-bottom:6px">
-            <div style="font-family:var(--font-heading-en);font-size:18px;color:var(--c-dark)">รายการวันนี้</div>
+            <div style="font-family:var(--font-heading-en),var(--font-th);font-size:18px;color:var(--c-dark)">รายการวันนี้</div>
           </div>
           ${!hasItems ? '<div class="ledger-empty">ยังไม่มีรายการ<br>เลือกหัตถการที่ทำวันนี้เพื่อเริ่มบันทึก</div>' : log.entries.map(e => {
             const p = procIndex[e.procId]; if (!p) return '';
@@ -428,7 +428,7 @@ function renderReports(root, user) {
     </div>
 
     <div class="card chart-card">
-      <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);font-weight:700">รายได้รายสัปดาห์</div>
+      <div style="font-family:var(--font-heading-en),var(--font-th);font-size:17px;color:var(--c-dark);font-weight:700">รายได้รายสัปดาห์</div>
       <div class="chart-container">
         <div class="chart-y-axis">
           <span>${fmtMoney(maxWeeklyTotal)}</span>
@@ -456,7 +456,7 @@ function renderReports(root, user) {
 
     <div class="grid-2">
       <div class="card">
-        <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สัดส่วนตามหมวด</div>
+        <div style="font-family:var(--font-heading-en),var(--font-th);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สัดส่วนตามหมวด</div>
         ${catList.map(c => {
           const barPct = Math.round(c.total / maxCat * 100);
           const pctOfTotal = monthTotal > 0 ? Math.round(c.total / monthTotal * 100) : 0;
@@ -479,7 +479,7 @@ function renderReports(root, user) {
       </div>
 
       <div class="card">
-        <div style="font-family:var(--font-heading-en);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สรุปรายสัปดาห์</div>
+        <div style="font-family:var(--font-heading-en),var(--font-th);font-size:17px;color:var(--c-dark);margin-bottom:12px;font-weight:700">สรุปรายสัปดาห์</div>
         <div class="weekly-list">
           ${weeks.map((w, i) => {
             const weekPct = monthTotal > 0 ? Math.round(w.total / monthTotal * 100) : 0;
@@ -586,7 +586,7 @@ function renderTeam(root, user) {
     <div class="card" style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
         <div>
-          <div style="font-family:var(--font-heading-en);font-size:18px;color:var(--c-dark)">ภาพรวมทีม · วันนี้</div>
+          <div style="font-family:var(--font-heading-en),var(--font-th);font-size:18px;color:var(--c-dark)">ภาพรวมทีม · วันนี้</div>
           <div style="font-size:12.5px;color:var(--c-brown);margin-top:4px">${descLabel}</div>
         </div>
         ${Store.isFirebase ? `<button class="btn btn-ghost btn-sm" id="btn-refresh-team" ${TeamState.loading ? 'disabled' : ''}>รีเฟรช</button>` : ''}
@@ -619,7 +619,7 @@ function renderSettings(root, user) {
     <div class="card" style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div>
-          <div style="font-family:var(--font-heading-en);font-size:20px;color:var(--c-dark)">${escapeHtml(user.displayName)}</div>
+          <div style="font-family:var(--font-heading-en),var(--font-th);font-size:20px;color:var(--c-dark)">${escapeHtml(user.displayName)}</div>
           ${roleBadgeHtml(user.role)}
         </div>
       </div>
