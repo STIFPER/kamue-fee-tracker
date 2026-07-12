@@ -144,6 +144,29 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// เก็บ element ตัวเดียวไว้ข้ามการ render เพื่อให้ transform ของมัน "เลื่อน" จากตำแหน่งเดิมไปตำแหน่งใหม่ได้จริง
+// (ถ้าสร้าง element ใหม่ทุกครั้งจะไม่มีตำแหน่งเก่าให้ transition ไล่จากไป กลายเป็นการ "เด้งโผล่" แทนที่จะ "เลื่อน")
+let navIndicatorEl = null;
+function positionNavIndicator() {
+  const nav = document.getElementById('bottomnav');
+  if (!nav) return;
+  const active = nav.querySelector('button.active');
+  if (!navIndicatorEl) {
+    navIndicatorEl = document.createElement('span');
+    navIndicatorEl.className = 'nav-indicator';
+    navIndicatorEl.setAttribute('aria-hidden', 'true');
+  }
+  if (!active) { navIndicatorEl.style.opacity = '0'; return; }
+  nav.insertBefore(navIndicatorEl, nav.firstChild);
+  const navRect = nav.getBoundingClientRect();
+  const btnRect = active.getBoundingClientRect();
+  navIndicatorEl.style.opacity = '1';
+  navIndicatorEl.style.width = btnRect.width + 'px';
+  navIndicatorEl.style.height = btnRect.height + 'px';
+  navIndicatorEl.style.transform = `translate(${btnRect.left - navRect.left}px, ${btnRect.top - navRect.top}px)`;
+}
+window.addEventListener('resize', () => positionNavIndicator());
+
 function renderNav(user) {
   const items = NAV_ITEMS.filter(it => !it.roles || it.roles.includes(user.role));
   const view = currentView();
@@ -159,6 +182,7 @@ function renderNav(user) {
         <span class="icon">${ICONS[it.key]}</span>${it.label}
       </button>`).join('') +
     `<button data-open-drawer><span class="icon">${ICONS.menu}</span>เมนู</button>`;
+  positionNavIndicator();
 
   document.getElementById('drawer-nav').innerHTML = items.map(it =>
     `<button class="${it.key === view ? 'active' : ''}" data-nav="${it.key}"><span class="icon">${ICONS[it.key]}</span>${it.label}</button>`
@@ -166,6 +190,14 @@ function renderNav(user) {
 
   document.querySelectorAll('[data-nav]').forEach(btn => {
     btn.addEventListener('click', () => { navigate(btn.getAttribute('data-nav')); closeDrawer(); });
+  });
+  // ลูกเล่นตอนแตะ: ปุ่มเด้งเข้าเป็นวงแหวนจางๆ แล้วหายไป — ให้ความรู้สึกตอบสนองชัดเจนกว่า scale เฉยๆ โดยเฉพาะแตะไวๆ
+  document.querySelectorAll('.bottomnav button').forEach(btn => {
+    btn.addEventListener('pointerdown', () => {
+      btn.classList.remove('tap-pulse');
+      void btn.offsetWidth;
+      btn.classList.add('tap-pulse');
+    });
   });
   const openBtn = document.querySelector('[data-open-drawer]');
   if (openBtn) openBtn.addEventListener('click', openDrawer);

@@ -248,7 +248,7 @@ button { cursor: pointer; }
 .modal-actions { display: flex; gap: 10px; margin-top: 26px; justify-content: flex-end; }
 
 /* ===== App shell ===== */
-.app { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 78px; }
+.app { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 96px; }
 .topbar {
   display: flex; align-items: center; gap: 14px; padding: 14px 20px;
   background: var(--glass-sheen-light), var(--glass-light);
@@ -350,30 +350,52 @@ button { cursor: pointer; }
   to { opacity: 1; transform: none; }
 }
 
+/* ลอยขึ้นจากขอบจอ มุมโค้งมนรอบด้าน แทนแถบสี่เหลี่ยมชิดขอบแบบเดิมที่ดูอึดอัด */
 .bottomnav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: radial-gradient(ellipse 130% 160% at 50% 120%, rgba(255,255,255,.4), transparent 60%), var(--glass-light);
+  position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse 130% 160% at 50% 120%, rgba(255,255,255,.45), transparent 60%), var(--glass-light-strong);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-  border-top: 1px solid var(--glass-border); box-shadow: 0 -1px 0 rgba(255,255,255,.4) inset;
-  display: flex; z-index: 20; padding-bottom: env(safe-area-inset-bottom);
+  border: 1.5px solid var(--glass-border); border-radius: 26px;
+  box-shadow: var(--shadow-lift), var(--glass-rim-light);
+  display: flex; z-index: 20; padding: 5px;
+  transition: box-shadow var(--dur-base) var(--ease-standard);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .bottomnav { background: var(--c-white); }
 }
+/* เม็ดไฮไลท์ที่ "เลื่อน" ตามแท็บที่กำลังเลือกอยู่ — เป็น element เดียวที่คงอยู่ข้าม render (ดู positionNavIndicator ใน app.js) */
+.nav-indicator {
+  position: absolute; top: 0; left: 0; border-radius: 20px;
+  background: var(--c-secondary); opacity: 0;
+  transition: transform .5s var(--ease-bounce), width .3s var(--ease-standard), opacity .25s var(--ease-standard);
+  pointer-events: none; z-index: 0;
+}
 .bottomnav button {
   flex: 1; background: none; border: none; padding: 9px 4px 7px; display: flex; flex-direction: column;
-  align-items: center; gap: 3px; color: var(--c-brown); font-size: 10px; font-weight: 500; position: relative;
-  transition: color var(--dur-base) var(--ease-standard);
+  align-items: center; gap: 3px; color: var(--c-brown); font-size: 10px; font-weight: 500; position: relative; z-index: 1;
+  border-radius: 20px; transition: color var(--dur-base) var(--ease-standard);
+  -webkit-tap-highlight-color: transparent;
 }
-.bottomnav button .icon { width: 21px; height: 21px; display: flex; align-items: center; justify-content: center; transition: transform var(--dur-base) var(--ease-out); }
+.bottomnav button .icon { width: 21px; height: 21px; display: flex; align-items: center; justify-content: center; transition: transform .4s var(--ease-bounce); }
 .bottomnav button .icon svg { width: 100%; height: 100%; }
 .bottomnav button.active { color: var(--c-dark); }
-.bottomnav button.active .icon { transform: translateY(-2px) scale(1.08); }
-.bottomnav button:active { transform: scale(.95); }
+.bottomnav button.active .icon { transform: translateY(-2px) scale(1.1); }
+.bottomnav button:active { transform: scale(.93); }
+/* วงแหวนจางๆ ที่กระจายออกจากศูนย์กลางปุ่มตอนแตะ ให้ความรู้สึก "ลูกเล่น" ชัดเจนแม้แตะเร็วๆ (ดู pointerdown ใน app.js) */
+.bottomnav button.tap-pulse::before {
+  content: ''; position: absolute; inset: -6px; border-radius: 22px;
+  background: var(--c-accent); opacity: .35;
+  animation: navTapPulse .5s var(--ease-out) forwards;
+  pointer-events: none; z-index: -1;
+}
+@keyframes navTapPulse {
+  from { opacity: .4; transform: scale(.7); }
+  to { opacity: 0; transform: scale(1.15); }
+}
 
 /* ===== FAB ===== */
 .fab {
-  position: fixed; right: 18px; bottom: calc(76px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%;
+  position: fixed; right: 18px; bottom: calc(92px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%;
   background: var(--glass-sheen-dark), var(--c-dark);
   color: var(--c-white); border: 1px solid rgba(255,255,255,.12); display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow-lift), 0 0 0 6px rgba(184, 156, 130, .22), var(--glass-rim-dark); z-index: 19;
@@ -492,6 +514,21 @@ button { cursor: pointer; }
 }
 .tier-head { display: flex; justify-content: space-between; align-items: flex-start; }
 .tier-name { font-family: var(--font-heading-en), var(--font-th); font-weight: 700; font-size: 22px; color: var(--c-dark); margin-top: 3px; line-height: 1.1; }
+
+/* ===== Tier gauge — ไฮไลท์หลักของหน้า Dashboard ===== */
+.gauge-wrap { position: relative; max-width: 300px; margin: 10px auto 0; }
+.gauge-svg { width: 100%; height: auto; display: block; }
+.gauge-value { transition: stroke-dashoffset 1.1s var(--ease-out); }
+.gauge-dot { transition: opacity .3s ease; filter: drop-shadow(0 0 6px rgba(217, 160, 102, .8)); }
+.gauge-center {
+  position: absolute; left: 0; right: 0; bottom: 6%; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.gauge-pct {
+  font-family: var(--font-heading-en), var(--font-th); font-weight: 800; font-variant-numeric: tabular-nums;
+  font-size: clamp(30px, 9vw, 42px); line-height: 1; color: var(--c-dark); letter-spacing: -0.02em;
+}
+.gauge-center .tier-name { margin-top: 2px; font-size: 15px; font-weight: 600; color: var(--c-brown); }
 .tier-badge {
   width: 44px; height: 44px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
@@ -529,43 +566,6 @@ button { cursor: pointer; }
   background: linear-gradient(135deg, #4A90E2 0%, #B9D9EB 100%);
   color: #fff;
   box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
-}
-.progress-track {
-  height: 8px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 99px;
-  margin-top: 16px;
-  overflow: visible;
-  position: relative;
-}
-.progress-fill {
-  height: 100%;
-  border-radius: 99px;
-  position: relative;
-  transition: width .6s var(--ease-out);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.95) 100%);
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
-}
-.progress-fill::after {
-  content: '';
-  position: absolute;
-  right: -4px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 10px;
-  height: 10px;
-  background: #fff;
-  border-radius: 50%;
-  box-shadow: 
-    0 0 8px #fff,
-    0 0 16px var(--c-accent),
-    0 0 24px var(--c-accent);
-  animation: glow-pulse 1.8s ease-in-out infinite alternate;
-}
-@keyframes glow-pulse {
-  0% { transform: translateY(-50%) scale(0.95); opacity: 0.8; }
-  100% { transform: translateY(-50%) scale(1.15); opacity: 1; }
 }
 .progress-meta {
   display: flex;
@@ -1124,7 +1124,7 @@ button { cursor: pointer; }
 
 /* ===== Toast ===== */
 .toast {
-  position: fixed; bottom: 90px; left: 50%; background: var(--c-dark); color: var(--c-white);
+  position: fixed; bottom: 108px; left: 50%; background: var(--c-dark); color: var(--c-white);
   padding: 11px 20px; border-radius: 999px; font-size: 13.5px; box-shadow: var(--shadow-soft); z-index: 200;
   opacity: 0; pointer-events: none; transform: translate(-50%, 10px) scale(.96);
   transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);

@@ -2,6 +2,34 @@
 
 const CHEVRON_ICON = '<svg class="disclosure-chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+// เกจครึ่งวงกลม (ไฮไลท์หลักของหน้า Dashboard) แสดง % ความคืบหน้าไปยัง Tier ถัดไป — โทนอุ่นตามธีมเดิม ไม่ใช่เขียวแบบต้นฉบับ
+// ค่า stroke-dashoffset เริ่มต้นตั้งเป็นเต็ม (ว่าง) แล้วให้ renderDashboard เซ็ตเป็น data-offset ผ่าน rAF เพื่อให้เกจ "วิ่งเติม" ตอนเข้าหน้า
+function tierGaugeSvg(pct) {
+  const p = Math.max(0, Math.min(100, pct));
+  const R = 90, CX = 110, CY = 110;
+  const len = Math.PI * R;
+  const offset = len * (1 - p / 100);
+  const theta = (180 - 1.8 * p) * Math.PI / 180;
+  const dotX = (CX + R * Math.cos(theta)).toFixed(1);
+  const dotY = (CY - R * Math.sin(theta)).toFixed(1);
+  return `
+    <svg class="gauge-svg" viewBox="0 0 220 126" fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="tierGaugeGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#C99F84"/>
+          <stop offset="0.55" stop-color="#A8705C"/>
+          <stop offset="1" stop-color="#3A2C28"/>
+        </linearGradient>
+      </defs>
+      <path d="M20 110 A90 90 0 0 1 200 110" stroke="var(--c-secondary)" stroke-opacity="0.7" stroke-width="15" stroke-linecap="round"/>
+      <path class="gauge-value" d="M20 110 A90 90 0 0 1 200 110" stroke="url(#tierGaugeGrad)" stroke-width="15" stroke-linecap="round"
+            stroke-dasharray="${len.toFixed(1)}" data-offset="${offset.toFixed(1)}"
+            style="stroke-dashoffset:${len.toFixed(1)}"/>
+      <circle class="gauge-dot" cx="${dotX}" cy="${dotY}" r="6.5" fill="#fff" style="opacity:0"/>
+    </svg>
+  `;
+}
+
 function getTierIcon(tierKey) {
   const icons = {
     bronze: '<svg viewBox="0 0 24 24" fill="currentColor" style="width:20px;height:20px"><path d="M12 2l2.5 7.5L22 12l-7.5 2.5L12 22l-2.5-7.5L2 12l7.5-2.5z"/></svg>', // 4-point spark/star
@@ -49,14 +77,15 @@ function renderDashboard(root, user) {
       <div class="dash-main">
         <div class="card hero-card">
           <div class="hero-tier">
-            <div class="tier-head">
-              <div>
-                <div class="kicker">This Month's Tier</div>
+            <div class="kicker" style="text-align:center">This Month's Tier</div>
+            <div class="gauge-wrap">
+              ${tierGaugeSvg(progressPct)}
+              <div class="gauge-center">
+                <div class="gauge-pct">${progressPct}%</div>
                 <div class="tier-name">${tier.en}</div>
               </div>
             </div>
-            <div class="progress-track"><div class="progress-fill" style="width:${progressPct}%"></div></div>
-            <div class="progress-meta"><span>${progressPct}% · ${moneySpan('dash-tier-month', monthTotal)} สะสม</span><span>${remainLabel}</span></div>
+            <div class="progress-meta"><span>${moneySpan('dash-tier-month', monthTotal)} สะสม</span><span>${remainLabel}</span></div>
           </div>
           <div class="hero-today card-dark">
             <div class="kicker">รายได้วันนี้</div>
@@ -96,6 +125,16 @@ function renderDashboard(root, user) {
     </div>
   `;
   document.getElementById('btn-go-entry').addEventListener('click', () => { UI.entryDate = todayStr; navigate('entry'); });
+
+  // เกจวิ่งเติมตอนเข้าหน้า — ต้องรอ 1 เฟรมให้ browser paint ค่าเริ่มต้น (offset เต็ม/ว่าง) ก่อน แล้วค่อยเปลี่ยนเป็นค่าจริงเพื่อให้ transition ทำงาน
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const val = root.querySelector('.gauge-value');
+      const dot = root.querySelector('.gauge-dot');
+      if (val) val.style.strokeDashoffset = val.getAttribute('data-offset') + 'px';
+      if (dot) { dot.style.transition = 'opacity .3s ease .85s'; dot.style.opacity = '1'; }
+    });
+  });
 }
 
 // ---------- Daily Entry ----------
