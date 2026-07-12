@@ -110,6 +110,21 @@ function renderEntry(root, user) {
     return Store.getProcedures().filter(p => p.categoryKey === UI.entryCat);
   }
 
+  // หัตถการที่คนนี้เลือกบ่อยที่สุด — นับจากประวัติของตัวเอง (Store.getAllLogs) ไม่ต้องตั้งค่าอะไรเลย
+  // แต่ละคนในทีมทำงานไม่เหมือนกัน ลิสต์นี้เลยต่างกันไปตามการใช้งานจริงของแต่ละคนโดยอัตโนมัติ
+  function frequentProcedures(limit) {
+    const logs = Store.getAllLogs();
+    const counts = {};
+    Object.values(logs).forEach(day => {
+      (day.entries || []).forEach(e => { counts[e.procId] = (counts[e.procId] || 0) + 1; });
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([id]) => procIndex[id])
+      .filter(Boolean)
+      .slice(0, limit);
+  }
+
   function procRowHtml(p) {
     const e = log.entries.find(x => x.procId === p.id);
     const qty = e ? e.quantity : 0, mins = e ? e.minutes : 0;
@@ -151,12 +166,14 @@ function renderEntry(root, user) {
   function refreshProcList() {
     const q = UI.entryQuery.trim().toLowerCase();
     const list = filteredList();
+    const freqSection = document.getElementById('freq-section');
+    if (freqSection) freqSection.classList.toggle('hidden', !!q);
     root.querySelectorAll('[data-cat]').forEach(b => {
       b.classList.toggle('active', !q && b.getAttribute('data-cat') === UI.entryCat);
     });
     const labelEl = document.getElementById('proc-section-label');
     if (labelEl) labelEl.textContent = q ? `ผลการค้นหา · ${list.length} รายการ` : (CATEGORIES.find(c => c.key === UI.entryCat).th + ' · เลือกหัตถการ');
-    const listEl = root.querySelector('.proc-list');
+    const listEl = document.getElementById('main-proc-list');
     if (listEl) {
       listEl.innerHTML = list.length === 0 ? '<div class="empty-state">ไม่พบหัตถการ</div>' : list.map(procRowHtml).join('');
       bindStepperEvents(listEl);
@@ -165,6 +182,7 @@ function renderEntry(root, user) {
 
   const initialQ = UI.entryQuery.trim().toLowerCase();
   const initialList = filteredList();
+  const frequentList = frequentProcedures(4);
 
   const yesterdayStr = toDateStr(addDays(dateObj, -1));
   const yesterdayLog = Store.getLog(yesterdayStr);
@@ -186,11 +204,18 @@ function renderEntry(root, user) {
     <div class="entry-layout">
       <section>
         <input class="search-field" id="search-proc" placeholder="ค้นหาหัตถการ" value="${escapeHtml(UI.entryQuery)}" autocomplete="off">
+        ${frequentList.length > 0 ? `
+        <div id="freq-section" class="${initialQ ? 'hidden' : ''}">
+          <div class="section-label" style="margin-top:14px">ใช้บ่อย</div>
+          <div class="proc-list">
+            ${frequentList.map(procRowHtml).join('')}
+          </div>
+        </div>` : ''}
         <div class="cat-tabs">
           ${CATEGORIES.map(c => `<button class="pill${(!initialQ && c.key === UI.entryCat) ? ' active' : ''}" data-cat="${c.key}">${c.th}</button>`).join('')}
         </div>
         <div class="section-label" id="proc-section-label">${initialQ ? `ผลการค้นหา · ${initialList.length} รายการ` : (CATEGORIES.find(c => c.key === UI.entryCat).th + ' · เลือกหัตถการ')}</div>
-        <div class="proc-list">
+        <div class="proc-list" id="main-proc-list">
           ${initialList.length === 0 ? '<div class="empty-state">ไม่พบหัตถการ</div>' : initialList.map(procRowHtml).join('')}
         </div>
       </section>
