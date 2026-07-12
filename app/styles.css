@@ -261,15 +261,23 @@ button { cursor: pointer; }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .topbar { background: var(--c-white); }
 }
+/* มือถือ: เอาแถบพื้นหลังด้านบนออกทั้งหมด (ไม่มีเมนูแฮมเบอร์เกอร์อยู่แล้ว เหลือแค่ topnav ที่ซ่อนอยู่บนมือถืออยู่แล้วด้วย)
+   เหลือแค่ปุ่มโปรไฟล์ลอยอยู่มุมขวาบน — ยังคง position:sticky ของ .topbar ไว้เพื่อให้ปุ่มลอยตามการเลื่อนจอ */
+@media (max-width: 859px) {
+  .topbar, .topbar.scrolled {
+    background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    border-bottom: none; box-shadow: none;
+  }
+}
+/* ปุ่มแฮมเบอร์เกอร์ซ้ำซ้อนกับปุ่ม "เมนู" ในแถบล่าง (เปิดลิ้นชักเดียวกัน) จึงซ่อนไว้เสมอ ไม่ใช่แค่บนเดสก์ท็อป */
 .hamburger-btn {
-  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
+  display: none; flex-direction: column; justify-content: center; align-items: center; gap: 4px;
   width: 34px; height: 34px; background: none; border: none; flex-shrink: 0; padding: 0;
 }
 .hamburger-btn span {
   display: block; width: 19px; height: 2px; border-radius: 2px; background: var(--c-dark);
   transition: transform var(--dur-base) var(--ease-out), opacity var(--dur-fast) var(--ease-standard);
 }
-@media (min-width: 860px) { .hamburger-btn { display: none; } }
 .topbar-brand {
   display: flex;
   align-items: center;
@@ -328,9 +336,18 @@ button { cursor: pointer; }
 .profile-chip {
   margin-left: auto; background: var(--c-secondary); color: var(--c-dark); border: none;
   border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px;
-  transition: background var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+  transition: background var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
 }
 .profile-chip:active { transform: scale(.96); }
+/* สไตล์ "ghost" — โปร่งแสง ลอยเดี่ยวๆ ไม่มีแถบพื้นหลังรองรับ (ดูหัวข้อ .topbar mobile) */
+@media (max-width: 859px) {
+  .profile-chip {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow: 0 8px 24px -10px rgba(58, 44, 40, 0.2);
+  }
+}
 .profile-chip .avatar {
   width: 24px; height: 24px; border-radius: 50%;
   background: rgba(255, 255, 255, 0.45);
