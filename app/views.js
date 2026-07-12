@@ -103,14 +103,68 @@ function renderEntry(root, user) {
   const dateObj = parseDateStr(UI.entryDate);
   const log = Store.getLog(UI.entryDate) || { entries: [] };
   const procIndex = proceduresIndex(user);
-  const q = UI.entryQuery.trim().toLowerCase();
 
-  let list;
-  if (q) {
-    list = Store.getProcedures().filter(p => (p.name + ' ' + p.categoryKey).toLowerCase().includes(q));
-  } else {
-    list = Store.getProcedures().filter(p => p.categoryKey === UI.entryCat);
+  function filteredList() {
+    const q = UI.entryQuery.trim().toLowerCase();
+    if (q) return Store.getProcedures().filter(p => (p.name + ' ' + p.categoryKey).toLowerCase().includes(q));
+    return Store.getProcedures().filter(p => p.categoryKey === UI.entryCat);
   }
+
+  function procRowHtml(p) {
+    const e = log.entries.find(x => x.procId === p.id);
+    const qty = e ? e.quantity : 0, mins = e ? e.minutes : 0;
+    const has = p.isHourly ? mins > 0 : qty > 0;
+    const countLabel = p.isHourly ? (mins + '′') : String(qty);
+    const feeLabel = p.isHourly ? `<span class="baht">฿</span>${p.fee} · ต่อชั่วโมง` : `<span class="baht">฿</span>${p.fee} · ${p.unit}`;
+    return `
+      <div class="proc-row">
+        <div class="proc-info">
+          <div class="proc-name">${escapeHtml(p.name)}</div>
+          <div class="proc-fee">${feeLabel}</div>
+        </div>
+        ${has ? `
+          <div class="stepper">
+            <button data-dec="${p.id}">−</button>
+            <span class="count" data-qty="${p.id}" title="แตะเพื่อพิมพ์จำนวนเอง">${countLabel}</span>
+            <button class="plus" data-inc="${p.id}">+</button>
+          </div>` : `<button class="add-btn" data-add="${p.id}">เพิ่ม +</button>`}
+      </div>`;
+  }
+
+  // ผูก event ของปุ่ม +/-/เพิ่ม/พิมพ์จำนวนเอง แบบ scoped ต่อ container ที่ระบุ
+  // เรียกซ้ำได้ทุกครั้งที่สร้าง DOM ใหม่เฉพาะจุด (เช่นตอนรีเฟรชผลค้นหา) โดยไม่ผูกซ้ำที่อื่น
+  function bindStepperEvents(container) {
+    container.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => stepValue(b.getAttribute('data-inc'), 1)));
+    container.querySelectorAll('[data-dec]').forEach(b => b.addEventListener('click', () => stepValue(b.getAttribute('data-dec'), -1)));
+    container.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
+      const procId = b.getAttribute('data-add');
+      const p = procIndex[procId];
+      // cc/unit (และ OR รายชั่วโมง) พิมพ์จำนวนเองได้เลย — ส่วนหน่วยนับเป็นชิ้น (เคส/ครั้ง/กล่อง/ขวด) ใช้ +1 แบบเดิม
+      if (p.isHourly || p.preciseQty) promptQty(procId, { blankIfEmpty: true });
+      else stepValue(procId, 1);
+    }));
+    container.querySelectorAll('[data-qty]').forEach(el => el.addEventListener('click', () => promptQty(el.getAttribute('data-qty'))));
+  }
+
+  // อัปเดตเฉพาะรายการหัตถการ + label ผลลัพธ์ + ปุ่มหมวดหมู่ที่ active โดยไม่แตะช่องค้นหาเลย
+  // (เดิมพิมพ์แล้วเรียก rerender() เต็มหน้า ทำให้ <input> ถูกสร้างใหม่ทุกตัวอักษรจนโฟกัสหลุด พิมพ์ต่อไม่ได้)
+  function refreshProcList() {
+    const q = UI.entryQuery.trim().toLowerCase();
+    const list = filteredList();
+    root.querySelectorAll('[data-cat]').forEach(b => {
+      b.classList.toggle('active', !q && b.getAttribute('data-cat') === UI.entryCat);
+    });
+    const labelEl = document.getElementById('proc-section-label');
+    if (labelEl) labelEl.textContent = q ? `ผลการค้นหา · ${list.length} รายการ` : (CATEGORIES.find(c => c.key === UI.entryCat).th + ' · เลือกหัตถการ');
+    const listEl = root.querySelector('.proc-list');
+    if (listEl) {
+      listEl.innerHTML = list.length === 0 ? '<div class="empty-state">ไม่พบหัตถการ</div>' : list.map(procRowHtml).join('');
+      bindStepperEvents(listEl);
+    }
+  }
+
+  const initialQ = UI.entryQuery.trim().toLowerCase();
+  const initialList = filteredList();
 
   const yesterdayStr = toDateStr(addDays(dateObj, -1));
   const yesterdayLog = Store.getLog(yesterdayStr);
@@ -131,32 +185,13 @@ function renderEntry(root, user) {
 
     <div class="entry-layout">
       <section>
-        <input class="search-field" id="search-proc" placeholder="ค้นหาหัตถการ" value="${escapeHtml(UI.entryQuery)}">
+        <input class="search-field" id="search-proc" placeholder="ค้นหาหัตถการ" value="${escapeHtml(UI.entryQuery)}" autocomplete="off">
         <div class="cat-tabs">
-          ${CATEGORIES.map(c => `<button class="pill${(!q && c.key === UI.entryCat) ? ' active' : ''}" data-cat="${c.key}">${c.th}</button>`).join('')}
+          ${CATEGORIES.map(c => `<button class="pill${(!initialQ && c.key === UI.entryCat) ? ' active' : ''}" data-cat="${c.key}">${c.th}</button>`).join('')}
         </div>
-        <div class="section-label">${q ? `ผลการค้นหา · ${list.length} รายการ` : (CATEGORIES.find(c => c.key === UI.entryCat).th + ' · เลือกหัตถการ')}</div>
+        <div class="section-label" id="proc-section-label">${initialQ ? `ผลการค้นหา · ${initialList.length} รายการ` : (CATEGORIES.find(c => c.key === UI.entryCat).th + ' · เลือกหัตถการ')}</div>
         <div class="proc-list">
-          ${list.length === 0 ? '<div class="empty-state">ไม่พบหัตถการ</div>' : list.map(p => {
-            const e = log.entries.find(x => x.procId === p.id);
-            const qty = e ? e.quantity : 0, mins = e ? e.minutes : 0;
-            const has = p.isHourly ? mins > 0 : qty > 0;
-            const countLabel = p.isHourly ? (mins + '′') : String(qty);
-            const feeLabel = p.isHourly ? `<span class="baht">฿</span>${p.fee} · ต่อชั่วโมง` : `<span class="baht">฿</span>${p.fee} · ${p.unit}`;
-            return `
-              <div class="proc-row">
-                <div class="proc-info">
-                  <div class="proc-name">${escapeHtml(p.name)}</div>
-                  <div class="proc-fee">${feeLabel}</div>
-                </div>
-                ${has ? `
-                  <div class="stepper">
-                    <button data-dec="${p.id}">−</button>
-                    <span class="count" data-qty="${p.id}" title="แตะเพื่อพิมพ์จำนวนเอง">${countLabel}</span>
-                    <button class="plus" data-inc="${p.id}">+</button>
-                  </div>` : `<button class="add-btn" data-add="${p.id}">เพิ่ม +</button>`}
-              </div>`;
-          }).join('')}
+          ${initialList.length === 0 ? '<div class="empty-state">ไม่พบหัตถการ</div>' : initialList.map(procRowHtml).join('')}
         </div>
       </section>
 
@@ -221,19 +256,19 @@ function renderEntry(root, user) {
     rerender();
   }
 
-  root.querySelectorAll('[data-inc]').forEach(b => b.addEventListener('click', () => stepValue(b.getAttribute('data-inc'), 1)));
-  root.querySelectorAll('[data-dec]').forEach(b => b.addEventListener('click', () => stepValue(b.getAttribute('data-dec'), -1)));
-  root.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => {
-    const procId = b.getAttribute('data-add');
-    const p = procIndex[procId];
-    // cc/unit (และ OR รายชั่วโมง) พิมพ์จำนวนเองได้เลย — ส่วนหน่วยนับเป็นชิ้น (เคส/ครั้ง/กล่อง/ขวด) ใช้ +1 แบบเดิม
-    if (p.isHourly || p.preciseQty) promptQty(procId, { blankIfEmpty: true });
-    else stepValue(procId, 1);
-  }));
-  root.querySelectorAll('[data-qty]').forEach(el => el.addEventListener('click', () => promptQty(el.getAttribute('data-qty'))));
+  bindStepperEvents(root);
 
-  document.getElementById('search-proc').addEventListener('input', (e) => { UI.entryQuery = e.target.value; rerender(); });
-  root.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => { UI.entryCat = b.getAttribute('data-cat'); UI.entryQuery = ''; rerender(); }));
+  document.getElementById('search-proc').addEventListener('input', (e) => {
+    UI.entryQuery = e.target.value;
+    refreshProcList();
+  });
+  root.querySelectorAll('[data-cat]').forEach(b => b.addEventListener('click', () => {
+    UI.entryCat = b.getAttribute('data-cat');
+    UI.entryQuery = '';
+    const searchEl = document.getElementById('search-proc');
+    if (searchEl) searchEl.value = '';
+    refreshProcList();
+  }));
   document.getElementById('date-picker').addEventListener('change', (e) => { UI.entryDate = e.target.value; rerender(); });
   document.getElementById('btn-prev-day').addEventListener('click', () => { UI.entryDate = toDateStr(addDays(dateObj, -1)); rerender(); });
   document.getElementById('btn-next-day').addEventListener('click', () => { UI.entryDate = toDateStr(addDays(dateObj, 1)); rerender(); });
