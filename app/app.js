@@ -66,6 +66,16 @@ function showToast(msg) {
   el._t = setTimeout(() => el.classList.remove('show'), 1800);
 }
 
+// ===== ปุ่มซ่อน/แสดงรายได้ในหน้า Dashboard — เผื่อเปิดจอตอนมีทีมงานอยู่ใกล้ๆ ค่าเก็บไว้ข้าม session ผ่าน localStorage =====
+const INCOME_HIDDEN_KEY = 'feeapp-income-hidden';
+function isIncomeHidden() {
+  return localStorage.getItem(INCOME_HIDDEN_KEY) === '1';
+}
+function toggleIncomeHidden() {
+  localStorage.setItem(INCOME_HIDDEN_KEY, isIncomeHidden() ? '0' : '1');
+  render();
+}
+
 // ===== Animated money figures — คงค่าก่อนหน้าไว้ข้ามการ render เพื่อนับวิ่งขึ้น/ลงอย่างนุ่มนวล =====
 const NumberAnim = { prev: {} };
 function moneySpan(key, value) {

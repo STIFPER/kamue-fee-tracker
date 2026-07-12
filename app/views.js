@@ -1,6 +1,8 @@
 // ===== View render functions =====
 
 const CHEVRON_ICON = '<svg class="disclosure-chevron" viewBox="0 0 24 24" fill="none"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const EYE_ICON = '<svg viewBox="0 0 24 24" fill="none"><path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>';
+const EYE_OFF_ICON = '<svg viewBox="0 0 24 24" fill="none"><path d="M3 3l18 18M10.6 5.2A10.7 10.7 0 0 1 12 5c7 0 10.5 7 10.5 7a15.6 15.6 0 0 1-3.1 4M6.4 6.5C3.4 8.4 1.5 12 1.5 12s3.5 7 10.5 7a10.4 10.4 0 0 0 4.2-.9M9.9 9.9a3 3 0 0 0 4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 // เกจครึ่งวงกลม (ไฮไลท์หลักของหน้า Dashboard) แสดง % ความคืบหน้าไปยัง Tier ถัดไป — โทนอุ่นตามธีมเดิม ไม่ใช่เขียวแบบต้นฉบับ
 // ค่า stroke-dashoffset เริ่มต้นตั้งเป็นเต็ม (ว่าง) แล้วให้ renderDashboard เซ็ตเป็น data-offset ผ่าน rAF เพื่อให้เกจ "วิ่งเติม" ตอนเข้าหน้า
@@ -20,9 +22,18 @@ function tierGaugeSvg(pct) {
           <stop offset="0.55" stop-color="#A8705C"/>
           <stop offset="1" stop-color="#3A2C28"/>
         </linearGradient>
+        <linearGradient id="tierShimmerGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+          <stop offset="0.5" stop-color="#fff" stop-opacity=".95"/>
+          <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+          <animateTransform attributeName="gradientTransform" type="translate" values="-1.4 0; 1.4 0; -1.4 0" keyTimes="0;0.5;1" dur="2.6s" repeatCount="indefinite"/>
+        </linearGradient>
       </defs>
       <path d="M20 110 A90 90 0 0 1 200 110" stroke="var(--c-secondary)" stroke-opacity="0.7" stroke-width="15" stroke-linecap="round"/>
       <path class="gauge-value" d="M20 110 A90 90 0 0 1 200 110" stroke="url(#tierGaugeGrad)" stroke-width="15" stroke-linecap="round"
+            stroke-dasharray="${len.toFixed(1)}" data-offset="${offset.toFixed(1)}"
+            style="stroke-dashoffset:${len.toFixed(1)}"/>
+      <path class="gauge-shimmer" d="M20 110 A90 90 0 0 1 200 110" stroke="url(#tierShimmerGrad)" stroke-width="15" stroke-linecap="round"
             stroke-dasharray="${len.toFixed(1)}" data-offset="${offset.toFixed(1)}"
             style="stroke-dashoffset:${len.toFixed(1)}"/>
       <circle class="gauge-dot" cx="${dotX}" cy="${dotY}" r="6.5" fill="#fff" style="opacity:0"/>
@@ -68,36 +79,45 @@ function renderDashboard(root, user) {
   const todayCount = todayLog ? todayLog.entries.length : 0;
 
   const { tier, next, progressPct } = currentTier(monthTotal, TIERS);
-  const remainLabel = next ? `อีก ${fmtMoney(next.min - monthTotal)} ถึง ${next.en}` : 'ระดับสูงสุด';
+  const incomeHidden = isIncomeHidden();
+  const dashMoney = (value, key) => incomeHidden
+    ? '<span class="baht">฿</span><span class="money-masked">••••</span>'
+    : (key ? moneySpan(key, value) : fmtMoney(value));
+  const remainLabel = next ? `อีก ${dashMoney(next.min - monthTotal)} ถึง ${next.en}` : 'ระดับสูงสุด';
 
   const recentDays = dailySeries(logs, addDays(today, -6), today).reverse();
 
   root.innerHTML = `
     <div class="dash-grid">
       <div class="dash-main">
-        <div class="card hero-card">
-          <div class="hero-tier">
-            <div class="kicker" style="text-align:center">This Month's Tier</div>
-            <div class="gauge-wrap">
-              ${tierGaugeSvg(progressPct)}
-              <div class="gauge-center">
-                <div class="gauge-pct">${progressPct}%</div>
-                <div class="tier-name">${tier.en}</div>
+        <div class="card dash-hero-panel">
+          <button class="income-toggle-icon-btn" id="btn-toggle-income" aria-pressed="${incomeHidden}" title="${incomeHidden ? 'แสดงรายได้' : 'ซ่อนรายได้'}">
+            ${incomeHidden ? EYE_OFF_ICON : EYE_ICON}
+          </button>
+          <div class="hero-card">
+            <div class="hero-tier">
+              <div class="kicker" style="text-align:center">This Month's Tier</div>
+              <div class="gauge-wrap">
+                ${tierGaugeSvg(progressPct)}
+                <div class="gauge-center">
+                  <div class="gauge-pct">${progressPct}%</div>
+                  <div class="tier-name">${tier.en}</div>
+                </div>
               </div>
+              <div class="progress-meta"><span>${dashMoney(monthTotal, 'dash-tier-month')} สะสม</span><span>${remainLabel}</span></div>
             </div>
-            <div class="progress-meta"><span>${moneySpan('dash-tier-month', monthTotal)} สะสม</span><span>${remainLabel}</span></div>
+            <div class="hero-today card-dark">
+              <div class="kicker">รายได้วันนี้</div>
+              <div class="today-amount">${dashMoney(todayTotal, 'dash-today')}</div>
+              <div class="kicker" style="margin-top:3px">${todayCount > 0 ? todayCount + ' หัตถการวันนี้' : 'ยังไม่มีรายการ'}</div>
+            </div>
           </div>
-          <div class="hero-today card-dark">
-            <div class="kicker">รายได้วันนี้</div>
-            <div class="today-amount">${moneySpan('dash-today', todayTotal)}</div>
-            <div class="kicker" style="margin-top:3px">${todayCount > 0 ? todayCount + ' หัตถการวันนี้' : 'ยังไม่มีรายการ'}</div>
-          </div>
-        </div>
 
-        <div class="card stat-strip">
-          <div class="stat-seg"><div class="label">วันนี้</div><div class="value">${moneySpan('dash-stat-today', todayTotal)}</div></div>
-          <div class="stat-seg"><div class="label">สัปดาห์นี้</div><div class="value">${moneySpan('dash-stat-week', weekTotal)}</div></div>
-          <div class="stat-seg"><div class="label">เดือนนี้</div><div class="value">${moneySpan('dash-stat-month', monthTotal)}</div></div>
+          <div class="stat-strip">
+            <div class="stat-seg"><div class="label">วันนี้</div><div class="value">${dashMoney(todayTotal, 'dash-stat-today')}</div></div>
+            <div class="stat-seg"><div class="label">สัปดาห์นี้</div><div class="value">${dashMoney(weekTotal, 'dash-stat-week')}</div></div>
+            <div class="stat-seg"><div class="label">เดือนนี้</div><div class="value">${dashMoney(monthTotal, 'dash-stat-month')}</div></div>
+          </div>
         </div>
 
         <button class="btn btn-primary btn-block" id="btn-go-entry">+ เพิ่มรายการวันนี้</button>
@@ -109,7 +129,7 @@ function renderDashboard(root, user) {
           <summary class="card disclosure-summary-row">
             <div class="ledger-item" style="border:none;padding:0;flex:1">
               <div class="ledger-name">${THAI_DAYS_SHORT[recentDays[0].date.getDay()]} ${recentDays[0].date.getDate()} ${THAI_MONTHS[recentDays[0].date.getMonth()]}${recentDays[0].dateStr === todayStr ? ' · วันนี้' : ''}</div>
-              <div class="ledger-sub">${recentDays[0].count > 0 ? fmtMoney(recentDays[0].total) : '—'}</div>
+              <div class="ledger-sub">${recentDays[0].count > 0 ? dashMoney(recentDays[0].total) : '—'}</div>
             </div>
             ${CHEVRON_ICON}
           </summary>
@@ -117,7 +137,7 @@ function renderDashboard(root, user) {
             ${recentDays.slice(1).map(d => `
               <div class="ledger-item">
                 <div class="ledger-name">${THAI_DAYS_SHORT[d.date.getDay()]} ${d.date.getDate()} ${THAI_MONTHS[d.date.getMonth()]}${d.dateStr === todayStr ? ' · วันนี้' : ''}</div>
-                <div class="ledger-sub">${d.count > 0 ? fmtMoney(d.total) : '—'}</div>
+                <div class="ledger-sub">${d.count > 0 ? dashMoney(d.total) : '—'}</div>
               </div>`).join('')}
           </div>
         </details>
@@ -125,13 +145,16 @@ function renderDashboard(root, user) {
     </div>
   `;
   document.getElementById('btn-go-entry').addEventListener('click', () => { UI.entryDate = todayStr; navigate('entry'); });
+  document.getElementById('btn-toggle-income').addEventListener('click', toggleIncomeHidden);
 
   // เกจวิ่งเติมตอนเข้าหน้า — ต้องรอ 1 เฟรมให้ browser paint ค่าเริ่มต้น (offset เต็ม/ว่าง) ก่อน แล้วค่อยเปลี่ยนเป็นค่าจริงเพื่อให้ transition ทำงาน
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const val = root.querySelector('.gauge-value');
+      const shimmer = root.querySelector('.gauge-shimmer');
       const dot = root.querySelector('.gauge-dot');
       if (val) val.style.strokeDashoffset = val.getAttribute('data-offset') + 'px';
+      if (shimmer) shimmer.style.strokeDashoffset = shimmer.getAttribute('data-offset') + 'px';
       if (dot) { dot.style.transition = 'opacity .3s ease .85s'; dot.style.opacity = '1'; }
     });
   });

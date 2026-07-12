@@ -267,6 +267,7 @@ button { cursor: pointer; }
   .topbar, .topbar.scrolled {
     background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     border-bottom: none; box-shadow: none;
+    padding: 10px 16px;
   }
 }
 /* ปุ่มแฮมเบอร์เกอร์ซ้ำซ้อนกับปุ่ม "เมนู" ในแถบล่าง (เปิดลิ้นชักเดียวกัน) จึงซ่อนไว้เสมอ ไม่ใช่แค่บนเดสก์ท็อป */
@@ -356,7 +357,7 @@ button { cursor: pointer; }
   flex-shrink: 0;
 }
 
-.view-root { flex: 1; padding: 20px 16px 32px; max-width: 1200px; margin: 0 auto; width: 100%; }
+.view-root { flex: 1; padding: 10px 16px 32px; max-width: 1200px; margin: 0 auto; width: 100%; }
 @media (min-width: 640px) { .view-root { padding: 24px 24px 40px; } }
 @media (min-width: 900px) { .view-root { padding: 32px 32px 48px; } }
 
@@ -523,6 +524,21 @@ button { cursor: pointer; }
 }
 .dash-main { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
 
+.money-masked { letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+
+/* กรอบรวมของหน้า Dashboard — เกจ + รายได้วันนี้ + สรุปวันนี้/สัปดาห์นี้/เดือนนี้ อยู่ในการ์ดใบเดียวกัน
+   คั่นด้วยเส้นแบ่งบางๆ แทนที่จะแยกเป็นกล่องซ้อนกล่องเหมือนเดิม */
+.dash-hero-panel { position: relative; }
+.income-toggle-icon-btn {
+  position: absolute; top: 22px; right: 22px; z-index: 2;
+  width: 32px; height: 32px; border-radius: 50%; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--glass-light-strong); border: 1px solid var(--c-accent); color: var(--c-brown);
+  transition: background var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+}
+.income-toggle-icon-btn:active { transform: scale(.92); }
+.income-toggle-icon-btn svg { width: 16px; height: 16px; }
+
 .hero-card { display: flex; flex-direction: column; gap: 18px; }
 @media (min-width: 560px) {
   .hero-card { flex-direction: row; align-items: stretch; }
@@ -535,8 +551,26 @@ button { cursor: pointer; }
 /* ===== Tier gauge — ไฮไลท์หลักของหน้า Dashboard ===== */
 .gauge-wrap { position: relative; max-width: 300px; margin: 10px auto 0; }
 .gauge-svg { width: 100%; height: auto; display: block; }
-.gauge-value { transition: stroke-dashoffset 1.1s var(--ease-out); }
-.gauge-dot { transition: opacity .3s ease; filter: drop-shadow(0 0 6px rgba(217, 160, 102, .8)); }
+.gauge-value {
+  transition: stroke-dashoffset 1.1s var(--ease-out);
+  animation: gaugeGlowPulse 2.4s ease-in-out infinite;
+}
+/* แถบแสงวิ่งไล่ตามความยาวที่เติมแล้ว (ใช้ dasharray/offset ชุดเดียวกับ .gauge-value เพื่อให้ตัดขอบเขตพอดีกับส่วนที่เติมจริง) ให้ความรู้สึก "มีพลัง" ไหลอยู่ตลอดแทนที่จะนิ่งเฉย */
+.gauge-shimmer { transition: stroke-dashoffset 1.1s var(--ease-out); mix-blend-mode: screen; opacity: .7; pointer-events: none; }
+.gauge-dot {
+  transition: opacity .3s ease;
+  filter: drop-shadow(0 0 6px rgba(217, 160, 102, .8));
+  transform-box: fill-box; transform-origin: center;
+  animation: gaugeDotPulse 1.5s ease-in-out infinite;
+}
+@keyframes gaugeGlowPulse {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(168, 112, 92, .5)) drop-shadow(0 0 12px rgba(217, 160, 102, .3)); }
+  50% { filter: drop-shadow(0 0 11px rgba(168, 112, 92, .9)) drop-shadow(0 0 24px rgba(217, 160, 102, .65)); }
+}
+@keyframes gaugeDotPulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 6px rgba(217, 160, 102, .8)); }
+  50% { transform: scale(1.45); filter: drop-shadow(0 0 16px rgba(217, 160, 102, 1)); }
+}
 .gauge-center {
   position: absolute; left: 0; right: 0; bottom: 6%; text-align: center;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -597,8 +631,11 @@ button { cursor: pointer; }
 }
 .today-amount { font-family: var(--font-heading-en), var(--font-th); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 34px; margin-top: 3px; line-height: 1.05; }
 
-.stat-strip { display: flex; padding: 0; overflow: hidden; }
-.stat-seg { flex: 1; min-width: 0; padding: 17px 8px; text-align: center; }
+.stat-strip {
+  display: flex; margin: 18px -24px -22px; padding-top: 2px;
+  border-top: 1px solid var(--glass-border);
+}
+.stat-seg { flex: 1; min-width: 0; padding: 15px 8px; text-align: center; }
 .stat-seg + .stat-seg { border-left: 1px solid var(--glass-border); }
 .stat-seg .label { font-size: 12px; color: var(--c-brown); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stat-seg .value {
