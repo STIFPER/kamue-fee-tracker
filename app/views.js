@@ -650,7 +650,7 @@ function renderTeam(root, user) {
     ${rows.map(r => `
       <div class="card" style="margin-bottom:10px">
         <div class="ledger-item" style="border:none;padding:0">
-          <div class="ledger-name">${escapeHtml(r.displayName)} ${roleBadgeHtml(r.role)}</div>
+          <div class="ledger-name">${roleBadgeHtml(r.role)} ${escapeHtml(r.displayName)}</div>
           <div class="ledger-sub">${fmtMoney(r.todayTotal)}<span style="font-size:11px;color:var(--c-brown);font-weight:500"> วันนี้</span></div>
         </div>
         <div style="font-size:12px;color:var(--c-brown);margin-top:4px">เดือนนี้ ${fmtMoney(r.monthTotal)} · ${r.entryCount} รายการสะสมทั้งหมด</div>
