@@ -100,8 +100,8 @@ button { cursor: pointer; }
 .liquid-blob {
   position: absolute;
   border-radius: 50%;
-  filter: blur(130px);
-  opacity: 0.38;
+  filter: blur(95px);
+  opacity: 0.62;
   pointer-events: none;
   animation: float-blob 26s ease-in-out infinite alternate;
 }
@@ -109,7 +109,7 @@ button { cursor: pointer; }
 .blob-1 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(225, 162, 142, 0.65) 0%, rgba(225, 162, 142, 0) 70%);
+  background: radial-gradient(circle, rgba(225, 162, 142, 0.8) 0%, rgba(225, 162, 142, 0) 70%);
   top: -10%;
   left: -10%;
   animation-duration: 22s;
@@ -118,7 +118,7 @@ button { cursor: pointer; }
 .blob-2 {
   width: 550px;
   height: 550px;
-  background: radial-gradient(circle, rgba(223, 172, 126, 0.6) 0%, rgba(223, 172, 126, 0) 70%);
+  background: radial-gradient(circle, rgba(223, 172, 126, 0.75) 0%, rgba(223, 172, 126, 0) 70%);
   bottom: -5%;
   right: -5%;
   animation-duration: 28s;
@@ -126,23 +126,40 @@ button { cursor: pointer; }
 }
 
 .blob-3 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, rgba(134, 100, 80, 0.35) 0%, rgba(134, 100, 80, 0) 70%);
-  top: 40%;
-  left: 30%;
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(184, 156, 130, 0.6) 0%, rgba(184, 156, 130, 0) 70%);
+  top: 38%;
+  left: 28%;
   animation-duration: 34s;
   animation-delay: -12s;
 }
 
 .blob-4 {
-  width: 450px;
-  height: 450px;
-  background: radial-gradient(circle, rgba(245, 230, 215, 0.7) 0%, rgba(245, 230, 215, 0) 70%);
-  bottom: 45%;
-  right: 25%;
+  width: 460px;
+  height: 460px;
+  background: radial-gradient(circle, rgba(110, 89, 75, 0.4) 0%, rgba(110, 89, 75, 0) 70%);
+  bottom: 42%;
+  right: 22%;
   animation-duration: 24s;
   animation-delay: -18s;
+}
+
+/* blob ที่ 5 ผ่าน ::after เพื่อไม่ต้องเพิ่ม element ใหม่ใน index.html */
+.liquid-bg-container::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  width: 480px;
+  height: 480px;
+  top: 8%;
+  right: 6%;
+  filter: blur(95px);
+  opacity: 0.62;
+  background: radial-gradient(circle, rgba(248, 246, 243, 0.85) 0%, rgba(248, 246, 243, 0) 70%);
+  animation: float-blob 30s ease-in-out infinite alternate;
+  animation-delay: -9s;
+  pointer-events: none;
 }
 
 @keyframes float-blob {
