@@ -1,5 +1,21 @@
 // ===== App shell: routing, nav, drawer, onboarding, motion helpers =====
 
+// กันซูมด้วยนิ้ว (pinch) และดับเบิลแตะซูม ให้ใช้งานรู้สึกเหมือนแอปจริงเวลาเปิดผ่านเบราว์เซอร์มือถือ
+// meta viewport (user-scalable=no) + CSS touch-action กันได้ส่วนใหญ่แล้ว แต่ Safari บน iOS ใช้ gesture event
+// ของตัวเองสำหรับ pinch ที่ไม่ฟังค่า touch-action จึงต้องดักเพิ่มตรงนี้ — ไม่กระทบการปัดสกอลปกติ
+['gesturestart', 'gesturechange', 'gestureend'].forEach(evt => {
+  document.addEventListener(evt, e => e.preventDefault());
+});
+document.addEventListener('touchmove', e => {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+let lastTouchEnd = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+
 const ICONS = {
   dashboard: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 20v-6h4v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   entry: '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="16" height="16" rx="5" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.5v7M8.5 12h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',

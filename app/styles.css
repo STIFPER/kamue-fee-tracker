@@ -45,7 +45,9 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+/* touch-action: pan-x pan-y — ปิดการซูมด้วยการบีบนิ้ว (pinch) ที่ระดับเบราว์เซอร์ แต่ยังปัด/สกอลได้ปกติ
+   ให้ความรู้สึกเหมือนแอปจริง ไม่ใช่หน้าเว็บที่ซูมเข้าออกได้ (ดูสคริปต์กัน gesture/double-tap เพิ่มเติมใน app.js) */
+html, body { margin: 0; padding: 0; touch-action: pan-x pan-y; overscroll-behavior-y: contain; }
 body {
   background: var(--c-primary);
   background-attachment: fixed;
