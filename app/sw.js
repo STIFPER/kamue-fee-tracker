@@ -1,8 +1,10 @@
 // Service Worker: cache-first สำหรับ app shell เพื่อให้เปิดใช้งานได้ไวและใช้งานได้แม้ไม่มีเน็ต (features.md > Offline Support)
-const CACHE_NAME = 'kamue-app-v22';
+const CACHE_NAME = 'kamue-app-v23';
+// หมายเหตุ: ไม่ precache './index.html' เพราะ Cloudflare Pages redirect '/index.html' -> '/' โดยอัตโนมัติ
+// ถ้าแคชไว้ตรงๆ จะได้ Response ที่ redirected:true ซึ่ง Safari ปฏิเสธไม่ยอมใช้ตอบ navigation request
+// (error: "Response served by service worker has redirections") ใช้ './' แทนซึ่งเป็นเนื้อหาเดียวกันแต่ไม่โดน redirect
 const SHELL = [
   './',
-  './index.html',
   './styles.css',
   './app.js',
   './views.js',
@@ -17,8 +19,20 @@ const SHELL = [
 // CDN ที่รู้จักและปลอดภัยจะ cache (ไฟล์ static นิ่งๆ ไม่ใช่ endpoint ข้อมูลของผู้ใช้)
 const CACHEABLE_HOSTS = ['www.gstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
+// ตัด flag "redirected" ออกโดยสร้าง Response ใหม่จาก body/status/headers เดิม — กันไว้เผื่อโดน redirect จากที่ไหนก็ตาม
+// (ไม่ใช่แค่ index.html) จะได้ไม่เจอบั๊ก Safari ปฏิเสธ response ที่มาจาก service worker ซ้ำอีก
+async function cleanRedirect(response) {
+  if (!response || !response.redirected) return response;
+  const body = await response.blob();
+  return new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers });
+}
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)));
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(SHELL.map((url) => fetch(url).then((res) => cleanRedirect(res)).then((res) => cache.put(url, res))))
+    )
+  );
   self.skipWaiting();
 });
 
@@ -41,6 +55,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const revalidate = fetch(event.request)
+        .then((res) => cleanRedirect(res))
         .then((res) => {
           if (res.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, res.clone()));
           return res;
