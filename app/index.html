@@ -40,7 +40,7 @@
   </div>
 </div>
 
-<div id="name-modal" class="modal-backdrop"
+<div id="name-modal" class="modal-backdrop">
   <div class="modal-card">
     <div class="modal-title">เริ่มต้นใช้งาน</div>
     <label class="field-label">ชื่อของคุณ</label>
@@ -96,17 +96,19 @@
   <span>กำลังโหลดข้อมูล...</span>
 </div>
 
+<!-- defer ทุกสคริปต์ — ให้เบราว์เซอร์โหลดไฟล์เหล่านี้ขนานกันได้ทันทีระหว่างพาร์สหน้า แทนที่จะรอโหลด+รันทีละไฟล์ตามลำดับ
+     (ลำดับการรันยังเหมือนเดิมตามที่เขียนไว้ เพราะ defer รันตามลำดับเอกสารเสมอ) -->
 <!-- Firebase SDK (Compat Version) -->
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js" defer></script>
 
 <!-- App configurations and scripts -->
-<script src="data/config.js"></script>
-<script src="data/catalog.js"></script>
-<script src="data/store.js"></script>
-<script src="data/calc.js"></script>
-<script src="views.js"></script>
-<script src="app.js"></script>
+<script src="data/config.js" defer></script>
+<script src="data/catalog.js" defer></script>
+<script src="data/store.js" defer></script>
+<script src="data/calc.js" defer></script>
+<script src="views.js" defer></script>
+<script src="app.js" defer></script>
 </body>
 </html>

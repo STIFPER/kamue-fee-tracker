@@ -1,17 +1,21 @@
-// Service Worker: cache-first สำหรับ app shell เพื่อให้เปิดใช้งานได้แม้ไม่มีเน็ต (features.md > Offline Support)
-const CACHE_NAME = 'kamue-app-v21';
+// Service Worker: cache-first สำหรับ app shell เพื่อให้เปิดใช้งานได้ไวและใช้งานได้แม้ไม่มีเน็ต (features.md > Offline Support)
+const CACHE_NAME = 'kamue-app-v22';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './app.js',
   './views.js',
+  './data/config.js',
   './data/catalog.js',
   './data/store.js',
   './data/calc.js',
   './manifest.json',
   './icons/icon.svg',
 ];
+
+// CDN ที่รู้จักและปลอดภัยจะ cache (ไฟล์ static นิ่งๆ ไม่ใช่ endpoint ข้อมูลของผู้ใช้)
+const CACHEABLE_HOSTS = ['www.gstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)));
@@ -25,23 +29,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Cache-first + stale-while-revalidate: ตอบจากแคชทันทีถ้ามี (เปิดแอปไวไม่ต้องรอเน็ตทุกครั้ง) แล้วค่อยยิงไปเช็คของใหม่
+// อัปเดตแคชเงียบๆ อยู่เบื้องหลังให้ครั้งต่อไปได้ของสด — จำกัดเฉพาะ asset นิ่งของแอปเองกับ CDN ที่รู้จัก (Firebase SDK, Google Fonts)
+// ไม่แตะคำขอไปหา Firestore/Auth ของจริง กันไม่ให้ได้ข้อมูลผู้ใช้เก่าค้างแคช
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
-  // Network-First Strategy: try to fetch from network first, fallback to cache if offline
+  const url = new URL(event.request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  if (!isSameOrigin && !CACHEABLE_HOSTS.includes(url.host)) return;
+
   event.respondWith(
-    fetch(event.request)
-      .then((res) => {
-        // If fetch is successful, clone and update the cache
-        if (res.ok && event.request.url.startsWith(self.location.origin)) {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-        }
-        return res;
-      })
-      .catch(() => {
-        // If network fails (offline), return cached version
-        return caches.match(event.request);
-      })
+    caches.match(event.request).then((cached) => {
+      const revalidate = fetch(event.request)
+        .then((res) => {
+          if (res.ok) caches.open(CACHE_NAME).then((cache) => cache.put(event.request, res.clone()));
+          return res;
+        })
+        .catch(() => cached);
+      event.waitUntil(revalidate);
+      return cached || revalidate;
+    })
   );
 });

@@ -95,13 +95,13 @@ const Store = {
       } else {
         // ดึงข้อมูลผู้ใช้ที่มีอยู่แล้ว
         userData = userSnap.data();
-        
-        // ดึง Settings ของผู้ใช้
-        const settingsSnap = await userRef.collection('settings').doc('default').get();
-        userData.settings = settingsSnap.exists ? settingsSnap.data() : { monthlyGoal: null, weekStart: 'mon', currency: 'THB' };
 
-        // ดึง Logs ทั้งหมดของผู้ใช้
-        const logsSnap = await userRef.collection('logs').get();
+        // ดึง settings และ logs พร้อมกัน (ไม่ต้องรอทีละอย่าง เพราะสองคำขอนี้ไม่เกี่ยวกัน) ลดเวลาโหลดลงครึ่งหนึ่ง
+        const [settingsSnap, logsSnap] = await Promise.all([
+          userRef.collection('settings').doc('default').get(),
+          userRef.collection('logs').get(),
+        ]);
+        userData.settings = settingsSnap.exists ? settingsSnap.data() : { monthlyGoal: null, weekStart: 'mon', currency: 'THB' };
         userData.logs = {};
         logsSnap.forEach(doc => {
           userData.logs[doc.id] = doc.data();
