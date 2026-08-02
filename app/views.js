@@ -67,10 +67,13 @@ function renderDashboard(root, user) {
   const logs = Store.getAllLogs();
   const today = new Date();
   const todayStr = toDateStr(today);
-  const weekStart = startOfWeek(today, user.settings.weekStart);
-  const weekEnd = addDays(weekStart, 6);
   const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
   const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const calendarWeekStart = startOfWeek(today, user.settings.weekStart);
+  const weekEnd = addDays(calendarWeekStart, 6);
+  // "สัปดาห์นี้" ไม่ควรดึงวันจากเดือนก่อนหน้ามารวม — ตัดจุดเริ่มต้นสัปดาห์ไม่ให้ย้อนก่อนวันที่ 1 ของเดือนนี้
+  // (เช่นต้นเดือนที่ตกวันอาทิตย์ สัปดาห์ปฏิทินปกติจะย้อนไปเริ่มวันจันทร์ของเดือนก่อน ทำให้ยอดสัปดาห์นี้ปนกับเดือนที่แล้ว)
+  const weekStart = calendarWeekStart < monthStart ? monthStart : calendarWeekStart;
 
   const todayTotal = sumRange(logs, today, today);
   const weekTotal = sumRange(logs, weekStart, weekEnd);
