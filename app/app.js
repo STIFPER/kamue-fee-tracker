@@ -373,6 +373,8 @@ document.getElementById('btn-confirm-name').addEventListener('click', () => {
 });
 
 boot();
+// boot() ข้างบนตัดสินใจแล้วว่าจะโชว์ onboarding หรือ app ตัวไหน — ปิด splash ที่ค้างไว้ตั้งแต่ก่อน JS โหลดเสร็จได้เลย
+document.getElementById('splash')?.remove();
 
 // แสดงหน้าจอหลักให้ผู้ใช้ — ถ้าเพิ่ง mount ครั้งแรก (appMounted=false) ให้เล่นเอฟเฟกต์เข้าหน้า
 // ถ้า mount ไปแล้ว (เช่น boot() เรนเดอร์จาก cache ไปก่อน) ให้อัปเดตเนื้อหาเงียบๆ ตัวเลขวิ่งนุ่ม ไม่เล่นเอฟเฟกต์ซ้ำ = ไม่กระพริบ
