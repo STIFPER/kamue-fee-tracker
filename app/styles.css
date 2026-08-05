@@ -252,7 +252,7 @@ button { cursor: pointer; }
 /* ===== App shell ===== */
 .app { min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 96px; }
 .topbar {
-  display: flex; align-items: center; gap: 14px; padding: 14px 20px;
+  display: flex; align-items: center; gap: 14px; padding: calc(14px + env(safe-area-inset-top)) 20px 14px;
   background: var(--glass-sheen-light), var(--glass-light);
   backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
   border-bottom: 1px solid var(--glass-border); position: sticky; top: 0; z-index: 20;
@@ -269,7 +269,7 @@ button { cursor: pointer; }
   .topbar, .topbar.scrolled {
     background: none; backdrop-filter: none; -webkit-backdrop-filter: none;
     border-bottom: none; box-shadow: none;
-    padding: 10px 16px;
+    padding: calc(10px + env(safe-area-inset-top)) 16px 10px;
   }
 }
 /* ปุ่มแฮมเบอร์เกอร์ซ้ำซ้อนกับปุ่ม "เมนู" ในแถบล่าง (เปิดลิ้นชักเดียวกัน) จึงซ่อนไว้เสมอ ไม่ใช่แค่บนเดสก์ท็อป */
@@ -443,7 +443,7 @@ button { cursor: pointer; }
   .drawer { background: var(--c-white); }
 }
 .drawer.open { transform: none; }
-.drawer-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 20px 18px 14px; border-bottom: 1px solid var(--c-secondary); }
+.drawer-header { display: flex; align-items: flex-start; justify-content: space-between; padding: calc(20px + env(safe-area-inset-top)) 18px 14px; border-bottom: 1px solid var(--c-secondary); }
 .drawer-profile-name { font-family: var(--font-heading-en), var(--font-th); font-weight: 700; font-size: 16px; color: var(--c-dark); }
 .drawer-profile-role { margin-top: 4px; }
 .drawer-close-btn { background: none; border: none; font-size: 16px; color: var(--c-brown); padding: 4px; line-height: 1; }
