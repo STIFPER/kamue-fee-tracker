@@ -220,10 +220,10 @@ function renderEntry(root, user) {
       const procId = b.getAttribute('data-add');
       const p = procIndex[procId];
       // cc/unit (และ OR รายชั่วโมง) พิมพ์จำนวนเองได้เลย — ส่วนหน่วยนับเป็นชิ้น (เคส/ครั้ง/กล่อง/ขวด) ใช้ +1 แบบเดิม
-      if (p.isHourly || p.preciseQty) promptQty(procId, { blankIfEmpty: true });
+      if (p.isHourly || p.preciseQty) openQtyModal(procId, { blankIfEmpty: true });
       else stepValue(procId, 1);
     }));
-    container.querySelectorAll('[data-qty]').forEach(el => el.addEventListener('click', () => promptQty(el.getAttribute('data-qty'))));
+    container.querySelectorAll('[data-qty]').forEach(el => el.addEventListener('click', () => openQtyModal(el.getAttribute('data-qty'))));
   }
 
   // อัปเดตเฉพาะรายการหัตถการ + label ผลลัพธ์ + ปุ่มหมวดหมู่ที่ active โดยไม่แตะช่องค้นหาเลย
@@ -328,21 +328,6 @@ function renderEntry(root, user) {
       const next = Math.max(0, roundQty(cur + delta));
       Store.setEntry(UI.entryDate, procId, next, 0);
     }
-    rerender();
-  }
-
-  function promptQty(procId, { blankIfEmpty } = {}) {
-    const p = procIndex[procId];
-    const e = log.entries.find(x => x.procId === procId);
-    const cur = p.isHourly ? (e ? e.minutes : 0) : (e ? e.quantity : 0);
-    const defaultVal = blankIfEmpty && cur === 0 ? '' : String(cur);
-    const label = p.isHourly ? `จำนวนนาที (${p.name}):` : `จำนวน — รองรับทศนิยม เช่น 1.5, 2.5 cc (${p.name} · ${p.unit}):`;
-    const input = prompt(label, defaultVal);
-    if (input === null) return;
-    const val = parseFloat(input);
-    if (isNaN(val) || val < 0) { showToast('กรอกตัวเลขไม่ถูกต้อง'); return; }
-    if (p.isHourly) Store.setEntry(UI.entryDate, procId, 0, val);
-    else Store.setEntry(UI.entryDate, procId, val, 0);
     rerender();
   }
 

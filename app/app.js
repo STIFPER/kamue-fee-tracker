@@ -372,6 +372,43 @@ document.getElementById('btn-confirm-name').addEventListener('click', () => {
   boot();
 });
 
+// ===== Qty modal wiring — แทนที่ window.prompt() ทั่วทั้งแอป (ดูเหตุผลที่ index.html) =====
+let qtyModalCtx = null;
+function openQtyModal(procId, opts) {
+  const p = Store.getProcedureById(procId);
+  if (!p) return;
+  const log = Store.getLog(UI.entryDate) || { entries: [] };
+  const e = log.entries.find(x => x.procId === procId);
+  const cur = p.isHourly ? (e ? e.minutes : 0) : (e ? e.quantity : 0);
+  const blankIfEmpty = opts && opts.blankIfEmpty;
+  qtyModalCtx = { procId, isHourly: p.isHourly };
+  document.getElementById('qty-modal-title').textContent = p.isHourly ? 'จำนวนนาที' : 'จำนวน';
+  document.getElementById('qty-modal-label').textContent = p.isHourly
+    ? `${p.name}`
+    : `${p.name} · ${p.unit} — รองรับทศนิยม เช่น 1.5, 2.5`;
+  const input = document.getElementById('qty-modal-input');
+  input.value = blankIfEmpty && cur === 0 ? '' : String(cur);
+  openOverlay(document.getElementById('qty-modal'));
+  requestAnimationFrame(() => { input.focus(); input.select(); });
+}
+function closeQtyModal() {
+  closeOverlay(document.getElementById('qty-modal'));
+  qtyModalCtx = null;
+}
+function confirmQtyModal() {
+  if (!qtyModalCtx) return;
+  const val = parseFloat(document.getElementById('qty-modal-input').value);
+  if (isNaN(val) || val < 0) { showToast('กรอกตัวเลขไม่ถูกต้อง'); return; }
+  const { procId, isHourly } = qtyModalCtx;
+  if (isHourly) Store.setEntry(UI.entryDate, procId, 0, val);
+  else Store.setEntry(UI.entryDate, procId, val, 0);
+  closeQtyModal();
+  render();
+}
+document.getElementById('btn-qty-cancel').addEventListener('click', closeQtyModal);
+document.getElementById('btn-qty-confirm').addEventListener('click', confirmQtyModal);
+document.getElementById('qty-modal-input').addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmQtyModal(); });
+
 boot();
 // boot() ข้างบนตัดสินใจแล้วว่าจะโชว์ onboarding หรือ app ตัวไหน — ปิด splash ที่ค้างไว้ตั้งแต่ก่อน JS โหลดเสร็จได้เลย
 document.getElementById('splash')?.remove();

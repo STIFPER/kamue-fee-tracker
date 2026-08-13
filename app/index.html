@@ -101,6 +101,20 @@
   </div>
 </div>
 
+<!-- แทนที่ window.prompt() — ใช้งานไม่ได้เลยตอนเปิดแอปแบบ "เพิ่มไปหน้าโฮมสกรีน" (standalone) บน iOS Safari
+     ทำให้กรอกจำนวนที่ต้องพิมพ์เอง (cc แม่นยำ, ชั่วโมง OR) เงียบๆ ไม่มีอะไรขึ้นมาให้กรอกเลย -->
+<div id="qty-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <div class="modal-title" id="qty-modal-title">จำนวน</div>
+    <label class="field-label" id="qty-modal-label">จำนวน</label>
+    <input id="qty-modal-input" class="field-input" type="number" inputmode="decimal" step="any" min="0">
+    <div class="modal-actions">
+      <button id="btn-qty-cancel" class="btn btn-ghost">ยกเลิก</button>
+      <button id="btn-qty-confirm" class="btn btn-primary">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
 <div id="app" class="app hidden">
   <header class="topbar">
     <button id="btn-hamburger" class="hamburger-btn" aria-label="เปิดเมนู">
