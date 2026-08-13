@@ -716,7 +716,9 @@ function renderTeam(root, user) {
     const todayLog = (u.logs || {})[todayStr];
     const todayTotal = todayLog ? todayLog.entries.reduce((s, e) => s + e.subtotal, 0) : 0;
     const count = Object.values(u.logs || {}).reduce((s, l) => s + l.entries.length, 0);
-    return { ...u, monthTotal, todayTotal, entryCount: count };
+    // รายละเอียดค่ามือรายวันของเดือนนี้ — ให้แอดมินเปิดดูได้ว่าแต่ละคนได้เท่าไรวันไหนบ้าง ไม่ใช่แค่ยอดรวม
+    const dailyThisMonth = dailySeries(u.logs || {}, monthStart, today).filter(d => d.count > 0).reverse();
+    return { ...u, monthTotal, todayTotal, entryCount: count, dailyThisMonth };
   }).sort((a, b) => b.todayTotal - a.todayTotal || b.monthTotal - a.monthTotal);
 
   const descLabel = Store.isFirebase
@@ -738,13 +740,26 @@ function renderTeam(root, user) {
     ${Store.isFirebase && !TeamState.loading && TeamState.rows && TeamState.rows.length === 0
       ? '<div class="card" style="text-align:center;padding:30px;color:var(--c-brown)">ยังไม่มีใครในทีมล็อกอินเข้าใช้งาน ระบบจะแสดงรายชื่ออัตโนมัติเมื่อมีคนล็อกอินครั้งแรก</div>' : ''}
     ${rows.map(r => `
-      <div class="card" style="margin-bottom:10px">
-        <div class="ledger-item" style="border:none;padding:0">
-          <div class="ledger-name">${roleBadgeHtml(r.role)} ${escapeHtml(r.displayName)}</div>
-          <div class="ledger-sub">${fmtMoney(r.todayTotal)}<span style="font-size:11px;color:var(--c-brown);font-weight:500"> วันนี้</span></div>
+      <details class="disclosure" style="margin-bottom:10px">
+        <summary class="card disclosure-summary-row" style="align-items:flex-start">
+          <div style="flex:1;min-width:0">
+            <div class="ledger-item" style="border:none;padding:0">
+              <div class="ledger-name">${roleBadgeHtml(r.role)} ${escapeHtml(r.displayName)}</div>
+              <div class="ledger-sub">${fmtMoney(r.todayTotal)}<span style="font-size:11px;color:var(--c-brown);font-weight:500"> วันนี้</span></div>
+            </div>
+            <div style="font-size:12px;color:var(--c-brown);margin-top:4px">เดือนนี้ ${fmtMoney(r.monthTotal)} · ${r.entryCount} รายการสะสมทั้งหมด</div>
+          </div>
+          ${CHEVRON_ICON}
+        </summary>
+        <div class="card disclosure-body">
+          <div class="section-label" style="margin:0 0 8px">ค่ามือรายวัน · เดือนนี้</div>
+          ${r.dailyThisMonth.length === 0 ? '<div class="empty-state" style="padding:16px">ยังไม่มีรายการเดือนนี้</div>' : r.dailyThisMonth.map(d => `
+            <div class="ledger-item">
+              <div class="ledger-name">${THAI_DAYS_SHORT[d.date.getDay()]} ${d.date.getDate()} ${THAI_MONTHS[d.date.getMonth()]}${d.dateStr === todayStr ? ' · วันนี้' : ''}</div>
+              <div class="ledger-sub">${fmtMoney(d.total)}</div>
+            </div>`).join('')}
         </div>
-        <div style="font-size:12px;color:var(--c-brown);margin-top:4px">เดือนนี้ ${fmtMoney(r.monthTotal)} · ${r.entryCount} รายการสะสมทั้งหมด</div>
-      </div>`).join('')}
+      </details>`).join('')}
   `;
 
   const refreshBtn = document.getElementById('btn-refresh-team');
