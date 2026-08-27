@@ -47,6 +47,8 @@ const UI = {
 };
 
 let lastRenderedView = null;
+// true เฉพาะ render() ที่เพิ่ง "เข้าหน้าใหม่" (สลับแท็บ) ไม่ใช่ rerender ภายในหน้าเดิม — renderTeam ใช้เช็คว่าควรดึงข้อมูลทีมใหม่จากคลาวด์หรือไม่
+let viewJustChanged = false;
 // แอปถูก mount (โชว์หน้าจอหลัก) ไปแล้วหรือยัง — ใช้กันไม่ให้เอฟเฟกต์เข้าหน้าเล่นซ้ำตอน Firebase sync เบื้องหลัง
 let appMounted = false;
 
@@ -305,6 +307,7 @@ function render() {
   const view = currentView();
   const changedView = view !== lastRenderedView;
   lastRenderedView = view;
+  viewJustChanged = changedView;
 
   if (view === 'entry') renderEntry(root, user);
   else if (view === 'history') renderHistory(root, user);

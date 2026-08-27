@@ -688,7 +688,9 @@ function fetchTeamData() {
 function renderTeam(root, user) {
   if (user.role !== 'admin' && user.role !== 'super_admin') { navigate('dashboard'); return; }
 
-  if (Store.isFirebase && TeamState.rows === null && !TeamState.loading) fetchTeamData();
+  // ดึงข้อมูลทีมใหม่ทุกครั้งที่ "เข้าหน้านี้ใหม่" (ไม่ใช่แค่ครั้งแรกที่เคยเปิดในเซสชันนี้) กันแอดมินเห็นข้อมูลค้างเก่า
+  // ทั้งที่ลูกทีมกรอกเพิ่มไปแล้วจริงๆ — เมื่อก่อนต้องกด "รีเฟรช" เองทุกครั้งถึงจะเห็นของใหม่
+  if (Store.isFirebase && !TeamState.loading && (TeamState.rows === null || viewJustChanged)) fetchTeamData();
 
   const today = new Date();
   const todayStr = toDateStr(today);
