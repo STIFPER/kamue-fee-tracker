@@ -1448,3 +1448,9 @@ input[type="number"],
   font-family: var(--font-numeric);
   font-variant-numeric: lining-nums tabular-nums;
 }
+
+/* On phones, profile/settings remain in the bottom menu; reclaim the duplicate header row. */
+@media screen and (max-width: 859px) {
+  .topbar { display: none; }
+  .app { padding-top: env(safe-area-inset-top); }
+}
