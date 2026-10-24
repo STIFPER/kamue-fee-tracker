@@ -43,6 +43,7 @@ const PROCEDURE_MASTER = [
   { id: 'inj_keloid', cat: 'Injection', name: 'ฉีดคีลอยด์', unit: '1 ครั้ง', fee: 10 },
 
   { id: 'trt_treatment', cat: 'Treatment', name: 'Treatment', unit: '1 เคส', fee: 150 },
+  { id: 'trt_treatment_30', cat: 'Treatment', name: 'Treatment 30 นาที', unit: '30 นาที', fee: 50 },
   { id: 'trt_lifting', cat: 'Treatment', name: 'Lifting Treatment (เฉพาะแถม)', unit: '1 เคส', fee: 75 },
   { id: 'trt_hair', cat: 'Treatment', name: 'Hair Treatment (เฉพาะแถม)', unit: '1 เคส', fee: 75 },
   { id: 'trt_blur', cat: 'Treatment', name: 'ยาเบลอ', unit: '1 เคส', fee: 35 },

@@ -32,10 +32,35 @@ function uid() {
   return 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2);
 }
 
+// รายการหัตถการของแต่ละคนถูกคัดลอกจาก PROCEDURE_MASTER ตอนสมัคร — หัตถการที่เพิ่มใหม่ใน catalog ภายหลังจึงไม่โผล่ให้คนเดิม
+// ฟังก์ชันนี้เติมรายการที่ยังไม่มี (เทียบจาก masterId) ต่อท้ายหมวดเดียวกัน ไม่แตะค่ามือ/การตั้งค่าที่ผู้ใช้แก้ไว้ คืน true ถ้ามีการเพิ่ม
+function syncMasterProcedures(user) {
+  if (!user || !Array.isArray(user.procedures)) return false;
+  const have = new Set(user.procedures.map(p => p.masterId).filter(Boolean));
+  let added = false;
+  PROCEDURE_MASTER.forEach((m, i) => {
+    if (have.has(m.id)) return;
+    const proc = {
+      id: uid(), masterId: m.id, categoryKey: m.cat, name: m.name,
+      unit: m.unit, fee: m.fee, isHourly: !!m.hourly, preciseQty: !!m.preciseQty, isCustom: false,
+      isActive: true, sort: i,
+    };
+    let at = -1;
+    user.procedures.forEach((p, idx) => { if (p.categoryKey === m.cat) at = idx; });
+    user.procedures.splice(at >= 0 ? at + 1 : user.procedures.length, 0, proc);
+    added = true;
+  });
+  return added;
+}
+
 function loadDB() {
   try {
     const raw = localStorage.getItem(DB_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      Object.values(parsed.users || {}).forEach(syncMasterProcedures);
+      return parsed;
+    }
   } catch (e) { /* ข้อมูลเสียหาย เริ่มสร้างใหม่ */ }
   return { users: {}, activeUserId: null };
 }
@@ -106,6 +131,12 @@ const Store = {
         logsSnap.forEach(doc => {
           userData.logs[doc.id] = doc.data();
         });
+
+        // เติมหัตถการใหม่จาก catalog ให้บัญชีเดิม แล้วซิงค์กลับคลาวด์ (ล้มเหลวได้ — รอบหน้าจะลองใหม่เอง)
+        if (syncMasterProcedures(userData)) {
+          userRef.update({ procedures: userData.procedures, updatedAt: new Date().toISOString() })
+            .catch(err => console.error("Firestore error syncing new procedures:", err));
+        }
       }
 
       // บันทึกลง Local Cache
