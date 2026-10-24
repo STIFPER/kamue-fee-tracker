@@ -1,5 +1,5 @@
 // Service Worker: cache-first สำหรับ app shell เพื่อให้เปิดใช้งานได้ไวและใช้งานได้แม้ไม่มีเน็ต (features.md > Offline Support)
-const CACHE_NAME = 'kamue-app-v23';
+const CACHE_NAME = 'kamue-app-v27';
 // หมายเหตุ: ไม่ precache './index.html' เพราะ Cloudflare Pages redirect '/index.html' -> '/' โดยอัตโนมัติ
 // ถ้าแคชไว้ตรงๆ จะได้ Response ที่ redirected:true ซึ่ง Safari ปฏิเสธไม่ยอมใช้ตอบ navigation request
 // (error: "Response served by service worker has redirections") ใช้ './' แทนซึ่งเป็นเนื้อหาเดียวกันแต่ไม่โดน redirect

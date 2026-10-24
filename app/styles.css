@@ -11,6 +11,7 @@
   --font-th: 'Sukhumvit Set', 'Noto Sans Thai', sans-serif;
   --font-heading-en: 'Inter', sans-serif;
   --font-body-en: 'Inter', sans-serif;
+  --font-numeric: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
   --radius-lg: 30px;
   --radius-md: 20px;
@@ -548,7 +549,7 @@ button { cursor: pointer; }
   .hero-today { flex: 1; }
 }
 .tier-head { display: flex; justify-content: space-between; align-items: flex-start; }
-.tier-name { font-family: var(--font-heading-en), var(--font-th); font-weight: 700; font-size: 22px; color: var(--c-dark); margin-top: 3px; line-height: 1.1; }
+.tier-name { font-family: var(--font-body-en); font-weight: 700; font-size: 22px; color: var(--c-dark); margin-top: 3px; line-height: 1.1; }
 
 /* ===== Tier gauge — ไฮไลท์หลักของหน้า Dashboard ===== */
 .gauge-wrap { position: relative; max-width: 300px; margin: 10px auto 0; }
@@ -1214,4 +1215,236 @@ button { cursor: pointer; }
 }
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ===== Visual polish: richer warm glass, same content and interactions ===== */
+@media screen {
+  :root {
+    --font-heading-en: 'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --shadow-soft: 0 24px 60px -22px rgba(58, 44, 40, 0.20);
+    --shadow-softer: 0 10px 30px -14px rgba(58, 44, 40, 0.13);
+    --shadow-lift: 0 30px 68px -24px rgba(58, 44, 40, 0.25);
+    --glass-light: rgba(255, 255, 255, 0.44);
+    --glass-light-strong: rgba(255, 255, 255, 0.64);
+    --glass-border: rgba(255, 255, 255, 0.72);
+    --glass-blur: blur(32px) saturate(235%);
+  }
+
+  html { background: var(--c-primary); }
+  body {
+    background:
+      radial-gradient(ellipse 72% 42% at 5% 0%, rgba(233, 197, 178, 0.72), transparent 100%),
+      radial-gradient(ellipse 64% 46% at 100% 76%, rgba(219, 184, 151, 0.58), transparent 100%),
+      linear-gradient(135deg, #F5EFE9 0%, var(--c-primary) 52%, #E8DDD2 100%);
+    background-attachment: fixed;
+  }
+
+  /* Keep the animated liquid backdrop visible behind the app surfaces. */
+  .liquid-bg-container { z-index: 0; opacity: 1; }
+  .app, #onboarding { position: relative; z-index: 1; }
+  .liquid-blob { opacity: 0.82; filter: blur(86px); }
+  .liquid-bg-container::after { opacity: 0.76; filter: blur(86px); }
+
+  .topbar {
+    background: var(--glass-sheen-light), linear-gradient(115deg, rgba(255,255,255,.68), rgba(250,241,232,.52));
+    border-bottom-color: rgba(255,255,255,.76);
+    box-shadow: var(--glass-rim-light), 0 12px 30px -22px rgba(58,44,40,.28);
+  }
+  .topbar.scrolled {
+    background: var(--glass-sheen-light), linear-gradient(115deg, rgba(255,255,255,.78), rgba(250,241,232,.7));
+  }
+  .topbar-logo {
+    background: var(--glass-sheen-dark), linear-gradient(145deg, #765D4D, var(--c-darkest));
+    box-shadow: var(--glass-rim-dark), 0 7px 16px -9px rgba(36,27,24,.65);
+  }
+  .topnav button.active {
+    background: linear-gradient(135deg, rgba(224,204,184,.98), rgba(208,182,157,.9));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 5px 14px -10px rgba(58,44,40,.55);
+  }
+
+  .card {
+    background:
+      var(--glass-sheen-light),
+      radial-gradient(ellipse 95% 80% at 100% 100%, rgba(230,205,180,.22), transparent 72%),
+      var(--glass-light);
+    border-color: rgba(255,255,255,.76);
+    box-shadow: var(--shadow-softer), var(--glass-rim-light);
+  }
+  .card-dark {
+    background:
+      var(--glass-sheen-dark),
+      radial-gradient(ellipse 90% 90% at 100% 100%, rgba(197,151,111,.25), transparent 74%),
+      linear-gradient(145deg, rgba(91,67,54,.96), rgba(43,31,27,.97));
+  }
+  .hero-today.card-dark {
+    border-color: rgba(255,255,255,.2);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.2), inset 0 18px 32px -16px rgba(255,255,255,.18), 0 18px 34px -22px rgba(36,27,24,.72);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .card:hover {
+      border-color: rgba(255,255,255,.94);
+      box-shadow: 0 30px 64px -22px rgba(58,44,40,.19), inset 0 1px 0 rgba(255,255,255,.92), inset 0 18px 34px -8px rgba(255,255,255,.55);
+    }
+    .card-dark:hover {
+      box-shadow: 0 30px 64px -22px rgba(36,27,24,.38), inset 0 1px 0 rgba(255,255,255,.32), inset 0 18px 34px -8px rgba(255,255,255,.18);
+    }
+  }
+
+  .section-label { color: var(--c-brown); font-size: 12px; letter-spacing: .055em; }
+  .stat-card .sub, .stat-seg .sub { color: var(--c-brown); }
+  .ledger-empty { color: var(--c-brown); }
+
+  .btn-primary {
+    background: linear-gradient(145deg, #554137, var(--c-darkest));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 9px 22px -14px rgba(36,27,24,.75);
+  }
+  .btn-secondary, .pill:not(.active), .month-nav button {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 5px 14px -12px rgba(58,44,40,.5);
+  }
+  .field-input, .fee-input, .search-field, .date-input {
+    box-shadow: inset 0 1px 2px rgba(58,44,40,.045), 0 1px 0 rgba(255,255,255,.65);
+    transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+  }
+  .field-input:focus, .fee-input:focus, .search-field:focus, .date-input:focus {
+    border-color: var(--c-accent);
+    box-shadow: 0 0 0 4px rgba(184,156,130,.16), inset 0 1px 2px rgba(58,44,40,.035);
+  }
+  .fee-input:focus { outline: none; }
+
+  .proc-row, .day-detail-item, .insight-item, .cal-day:not(.empty) {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.78), 0 8px 22px -16px rgba(58,44,40,.28);
+  }
+  .chart-bar-track {
+    background: linear-gradient(180deg, rgba(255,255,255,.52), rgba(215,195,174,.22));
+    border-color: rgba(255,255,255,.62);
+    box-shadow: inset 0 2px 5px rgba(58,44,40,.07), 0 1px 0 rgba(255,255,255,.58);
+  }
+  .chart-bar-fill { box-shadow: 0 5px 14px rgba(110,89,75,.24), inset 0 1px 0 rgba(255,255,255,.32); }
+  .chart-bar-label { color: var(--c-dark); }
+
+  .bottomnav {
+    background: var(--glass-sheen-light), linear-gradient(135deg, rgba(255,255,255,.76), rgba(246,235,223,.66));
+    box-shadow: var(--shadow-lift), var(--glass-rim-light), 0 10px 28px -20px rgba(58,44,40,.42);
+  }
+  .fab {
+    background: var(--glass-sheen-dark), linear-gradient(145deg, #765D4D, var(--c-darkest));
+    box-shadow: var(--shadow-lift), 0 0 0 6px rgba(184,156,130,.25), 0 10px 24px -12px rgba(36,27,24,.72), var(--glass-rim-dark);
+  }
+}
+
+/* ===== Phone layout pass: clearer rhythm and easier touch targets ===== */
+@media screen and (max-width: 600px) {
+  .app { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  .view-root { padding: 14px 16px 32px; }
+  .card { padding: 20px 18px; border-radius: 24px; }
+
+  .dash-grid, .dash-main { gap: 16px; }
+  .hero-card { gap: 14px; }
+  .income-toggle-icon-btn { top: 18px; right: 18px; width: 40px; height: 40px; }
+  .stat-strip { margin: 16px -18px -20px; }
+  .stat-seg { padding: 14px 5px; }
+  .stat-seg .label { font-size: 11.5px; }
+
+  .date-row { gap: 7px; margin-bottom: 12px; }
+  .date-row .btn, .date-row .date-input { min-height: 42px; }
+  .date-row .date-input { min-width: 0; padding-inline: 9px; }
+  .search-field { min-height: 46px; }
+
+  /* Keep every category reachable in a single, swipeable strip. */
+  .cat-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+    gap: 8px;
+    margin: 14px -2px;
+    padding: 2px 2px 8px;
+  }
+  .cat-tabs::-webkit-scrollbar { display: none; }
+  .cat-tabs .pill { flex: 0 0 auto; min-height: 42px; padding: 9px 15px; scroll-snap-align: start; }
+
+  .proc-list { gap: 9px; }
+  .proc-row { min-height: 70px; padding: 13px 14px; border-radius: 19px; }
+  .proc-name { line-height: 1.35; }
+  .stepper { gap: 7px; }
+  .stepper button { width: 40px; height: 40px; }
+  .stepper .count { min-width: 24px; }
+  .add-btn { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; }
+  .ledger-controls { gap: 6px; }
+  .ledger-controls button { width: 36px; height: 36px; }
+
+  .month-nav { gap: 10px; }
+  .month-nav button { width: 42px; height: 42px; flex: 0 0 42px; }
+  .month-nav .month-label { font-size: 19px; }
+  .calendar-grid { gap: 5px; }
+  .cal-day { aspect-ratio: .96; border-radius: 12px; }
+  .cal-day .d-num { font-size: 13px; }
+  .cal-day .d-amt {
+    max-width: 100%;
+    padding-inline: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 18px; }
+  .stat-card { padding: 18px 15px; border-radius: 22px; }
+  .stat-card .value { font-size: clamp(19px, 5.8vw, 24px); line-height: 1.2; overflow-wrap: anywhere; }
+  .stat-card .sub { font-size: 11.5px; }
+  .chart-card { margin-bottom: 18px; }
+  .chart-container { height: 220px; gap: 10px; padding: 10px 2px 5px; }
+  .chart-y-axis { min-width: 58px; padding-right: 8px; font-size: 10.5px; }
+  .chart-bars { padding-left: 4px; }
+  .chart-bar-track { width: 24px; height: 138px; }
+  .chart-bar-fill-val { font-size: 10.5px; }
+
+  .grid-2 { gap: 16px; }
+  .insight-list { gap: 8px; }
+  .settings-row { gap: 12px; padding: 15px 0; }
+  .settings-row .label { flex: 1; min-width: 0; font-size: 14px; line-height: 1.45; }
+  .fee-input { width: 96px; min-height: 42px; }
+  .field-input { min-height: 46px; }
+
+  .bottomnav { left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom)); padding: 6px; }
+  .bottomnav button { min-height: 58px; padding: 8px 3px 7px; font-size: 10.5px; }
+  .bottomnav button .icon { width: 22px; height: 22px; }
+  .fab { right: 16px; bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+
+@media screen and (max-width: 380px) {
+  .view-root { padding-inline: 14px; }
+  .card { padding-inline: 16px; }
+  .date-row { gap: 6px; }
+  .date-row .date-input { padding-inline: 7px; font-size: 12px; }
+  .date-row .btn { padding-inline: 11px; }
+  .stat-row { gap: 9px; }
+  .stat-card { padding-inline: 12px; }
+  .stat-card .value { font-size: clamp(18px, 5.6vw, 21px); }
+  .stepper button { width: 38px; height: 38px; }
+}
+
+/* Readable, aligned numerals independent of the decorative heading font. */
+.gauge-pct,
+.today-amount,
+.stat-seg .value,
+.ledger-total-row .amount,
+.stat-card .value,
+.ledger-sub,
+.day-detail-total .amount,
+.weekly-amount,
+.weekly-item-row .value,
+.bar-row .bar-value,
+.chart-y-axis,
+.chart-bar-fill-val,
+.cal-day .d-num,
+.cal-day .d-amt,
+.stepper .count,
+input[type="number"],
+[data-anim-key] {
+  font-family: var(--font-numeric);
+  font-variant-numeric: lining-nums tabular-nums;
 }
