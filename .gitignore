@@ -9,3 +9,10 @@ Thumps.db
 # Backup and ZIP archives
 *.zip
 *.csv
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
