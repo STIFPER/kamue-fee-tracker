@@ -51,13 +51,19 @@ const PROCEDURE_MASTER = [
   { id: 'preop_blood', cat: 'Pre-op', name: 'เจาะเลือด (Pre-op)', unit: '1 ครั้ง', fee: 35 },
   { id: 'preop_ekg', cat: 'Pre-op', name: 'ตรวจ EKG', unit: '1 ครั้ง', fee: 10 },
 
-  { id: 'or_hours', cat: 'OR', name: 'ชั่วโมง OR', unit: 'ต่อชั่วโมง', fee: 100, hourly: true },
+  { id: 'or_hours', cat: 'OR', name: 'ชั่วโมง OR', unit: 'ต่อชั่วโมง', fee: 120, hourly: true },
 
   { id: 'other_iv', cat: 'Other', name: 'IV', unit: '1 เคส', fee: 35 },
   { id: 'other_shampoo', cat: 'Other', name: 'สระผม', unit: '1 เคส', fee: 30 },
   { id: 'other_offstaple', cat: 'Other', name: 'Off staple', unit: '1 เคส', fee: 20 },
   { id: 'other_stitch', cat: 'Other', name: 'ตัดไหม', unit: '1 เคส', fee: 30 },
   { id: 'other_wound', cat: 'Other', name: 'ทำแผล (ฉายแสง)', unit: '1 เคส', fee: 10 },
+];
+
+// ปรับค่ามือของหัตถการที่มีอยู่แล้วในบัญชีเดิม — เปลี่ยนเฉพาะคนที่ยังใช้ค่าเดิม (from) อยู่ ใครตั้งค่าเองไว้ไม่แตะ
+// ประวัติที่บันทึกไปแล้วไม่เปลี่ยน เพราะแต่ละรายการเก็บค่ามือ ณ วันนั้นไว้ (feeSnapshot)
+const FEE_MIGRATIONS = [
+  { id: 'or_hours', from: 100, to: 120 },
 ];
 
 // ระบบระดับ (Tier) — คำนวณจากยอดสะสมรายเดือน อิงรายได้ทั่วไปของอาชีพ ~5,000–6,000 บาท/เดือน ให้อยู่ราวระดับกลาง

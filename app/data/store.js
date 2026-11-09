@@ -33,7 +33,7 @@ function uid() {
 }
 
 // รายการหัตถการของแต่ละคนถูกคัดลอกจาก PROCEDURE_MASTER ตอนสมัคร — หัตถการที่เพิ่มใหม่ใน catalog ภายหลังจึงไม่โผล่ให้คนเดิม
-// ฟังก์ชันนี้เติมรายการที่ยังไม่มี (เทียบจาก masterId) ต่อท้ายหมวดเดียวกัน ไม่แตะค่ามือ/การตั้งค่าที่ผู้ใช้แก้ไว้ คืน true ถ้ามีการเพิ่ม
+// ฟังก์ชันนี้เติมรายการที่ยังไม่มี (เทียบจาก masterId) ต่อท้ายหมวดเดียวกัน ไม่แตะค่ามือ/การตั้งค่าที่ผู้ใช้แก้ไว้ และปรับค่ามือตาม FEE_MIGRATIONS คืน true ถ้ามีการเปลี่ยนแปลง
 function syncMasterProcedures(user) {
   if (!user || !Array.isArray(user.procedures)) return false;
   const have = new Set(user.procedures.map(p => p.masterId).filter(Boolean));
@@ -49,6 +49,11 @@ function syncMasterProcedures(user) {
     user.procedures.forEach((p, idx) => { if (p.categoryKey === m.cat) at = idx; });
     user.procedures.splice(at >= 0 ? at + 1 : user.procedures.length, 0, proc);
     added = true;
+  });
+  FEE_MIGRATIONS.forEach(m => {
+    user.procedures.forEach(p => {
+      if (p.masterId === m.id && p.fee === m.from) { p.fee = m.to; added = true; }
+    });
   });
   return added;
 }
